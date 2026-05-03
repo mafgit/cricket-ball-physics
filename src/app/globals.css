@@ -38,6 +38,7 @@ canvas:focus {
 	padding: 4px 8px;
 	opacity: 0.8;
 	right: 30px;
+	font-size:12px;
 	border-radius: 4px;
 }
 
@@ -45,6 +46,7 @@ canvas:focus {
 	position: absolute;
 	z-index: 30 !important;
 	top: 60px;
+	font-size:12px;
 	opacity: 0.8;
 	background: rgba(15, 15, 15, 0.918);
 	padding: 4px 8px;

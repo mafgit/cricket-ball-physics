@@ -12,6 +12,7 @@ export default function Loader() {
 					style={{ width: progress + "%" }}
 				></div>
 			</div>
+			
 			<p>{Math.round(progress) + "%"}</p>
 		</Html>
 	);

@@ -28,8 +28,10 @@ export default function Pitch({ textured = true }) {
 				<Crease posZ={10.06} />
 				<Crease posZ={-10.06 + 1.22} popping />
 				<Crease posZ={10.06 - 1.22} popping />
-				<Crease posZ={0} posX={-1.32} vertical />
-				<Crease posZ={0} posX={1.32} vertical />
+				<Crease posZ={10.06} posX={-1.32} vertical />
+				<Crease posZ={10.06} posX={1.32} vertical />
+				<Crease posZ={-10.06} posX={-1.32} vertical />
+				<Crease posZ={-10.06} posX={1.32} vertical />
 			</group>
 
 			<Stumps posZ={10.06} />

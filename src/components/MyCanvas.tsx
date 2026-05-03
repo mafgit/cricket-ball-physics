@@ -80,38 +80,38 @@ export default function MyCanvas() {
 				}}
 				shadows
 			>
-				<Suspense fallback={<Loader />}>
-					{/* helpers */}
-					{/* <axesHelper args={[30]} />
+				{/* helpers */}
+				{/* <axesHelper args={[30]} />
 			<gridHelper args={[20, 20]} /> */}
-					<Stats />
+				<Stats />
 
-					{/* <OrbitControls /> */}
+				{/* <OrbitControls /> */}
 
-					{/* <FirstPersonControls /> */}
-					<PointerLockControls />
-					{/* <Player /> */}
+				{/* <FirstPersonControls /> */}
+				<PointerLockControls />
+				{/* <Player /> */}
 
-					{/* environment */}
-					<Environment preset="park" />
-					<Sky sunPosition={sunPos as any} />
+				{/* environment */}
+				<Environment preset="park" />
+				<Sky sunPosition={sunPos as any} />
 
-					{/* light */}
-					<ambientLight intensity={0.3} />
-					<directionalLight
-						position={sunPos as any}
-						shadow-camera-left={-20}
-						shadow-camera-right={20}
-						shadow-camera-top={30}
-						shadow-camera-bottom={-30}
-						shadow-camera-near={10}
-						shadow-camera-far={60}
-						shadow-mapSize={[2048, 2048]}
-						intensity={2}
-						castShadow
-					/>
+				{/* light */}
+				<ambientLight intensity={0.3} />
+				<directionalLight
+					position={sunPos as any}
+					shadow-camera-left={-20}
+					shadow-camera-right={20}
+					shadow-camera-top={30}
+					shadow-camera-bottom={-30}
+					shadow-camera-near={10}
+					shadow-camera-far={60}
+					shadow-mapSize={[2048, 2048]}
+					intensity={2}
+					castShadow
+				/>
 
-					{/* main */}
+				{/* main */}
+				<Suspense fallback={<Loader />}>
 					<Ball />
 					<Ground />
 				</Suspense>

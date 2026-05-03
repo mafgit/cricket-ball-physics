@@ -11,7 +11,7 @@ class GameConditions {
 	velocity!: { x: number; y: number; z: number };
 	ballRef?: any;
 	initialBallPosition: number[];
-	verticalRetainOnBounce!: number;
+	coefficientOfRestitution!: number;
 	coefficientOfFriction!: number;
 
 	constructor() {
@@ -65,8 +65,8 @@ class GameConditions {
 		this.timeElapsed = 0;
 		this.isStopped = false;
 
-		this.verticalRetainOnBounce = 0.75;
-		this.coefficientOfFriction = 0.3;
+		this.coefficientOfRestitution = 0.5; // more = more bounce preserved
+		this.coefficientOfFriction = 0.3; // less = more energy velocity preserved
 	}
 }
 

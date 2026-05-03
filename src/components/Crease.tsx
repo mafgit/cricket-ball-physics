@@ -16,7 +16,7 @@ export default function Crease({
 		h = 0.05;
 	} else {
 		w = 0.05;
-		h = 22;
+		h = 2.48;
 	}
 
 	return (

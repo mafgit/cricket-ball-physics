@@ -57,33 +57,25 @@ export default function Ball() {
 					gameConditions.gravityAcc * deltaSec;
 			}
 
-			// if (Math.abs(gameConditions.velocity.x) < 0.5)
-			// 	gameConditions.velocity.x = 0;
-			// if (Math.abs(gameConditions.velocity.y) < 0.5)
-			// 	gameConditions.velocity.y = 0;
-			// if (Math.abs(gameConditions.velocity.z) < 0.001)
-			// 	gameConditions.velocity.z = 0;
-
-			// stop anim
-			if (ballRef.current.position.z <= -120) {
-				gameConditions.isStopped = true;
-				gameConditions.timeElapsed = 0;
-			}
-
 			// console.log(gameConditions.velocity);
-			// bounce
+
+			// touching ground
 			if (ballRef.current.position.y <= ballRadius) {
-				gameConditions.velocity.y *=
-					-gameConditions.verticalRetainOnBounce *
-					(1 - gameConditions.coefficientOfFriction);
-				ballRef.current.position.y = ballRadius;
+				ballRef.current.position.y = ballRadius; // fix if below pitch
 
-				gameConditions.velocity.z *=
-					1 - gameConditions.coefficientOfFriction;
-
-				gameConditions.velocity.x *=
-					1 - gameConditions.coefficientOfFriction;
+				if (gameConditions.velocity.y < 0) {
+					// bouncing
+					gameConditions.velocity.y *=
+						-gameConditions.coefficientOfRestitution;
+					gameConditions.velocity.z *=
+						1 - gameConditions.coefficientOfFriction;
+					gameConditions.velocity.x *=
+						1 - gameConditions.coefficientOfFriction;
+				}
 			}
+
+			if (Math.abs(gameConditions.velocity.y) < 0.2)
+				gameConditions.velocity.y = 0;
 
 			// updating positions
 			ballRef.current.position.z += gameConditions.velocity.z * deltaSec;
@@ -110,6 +102,16 @@ export default function Ball() {
 					2,
 				);
 				velDivP.innerText = mpsToKph(v).toFixed(2);
+			}
+
+			// stop anim
+			if (ballRef.current.position.z <= -30) {
+				gameConditions.isStopped = true;
+				gameConditions.timeElapsed = 0;
+				velDivX.innerText = 0;
+				velDivY.innerText = 0;
+				velDivZ.innerText = 0;
+				velDivP.innerText = 0;
 			}
 		}
 	});
