@@ -1,5 +1,5 @@
 "use client";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { useRef } from "react";
 import { OrbitControls } from "@react-three/drei";
 
@@ -9,9 +9,17 @@ function Ball() {
 	const seamHeight = 0.01;
 	const seamThickness = 0.03;
 	const seamOffsets = [-0.48, -0.32,  -0.09, 0.09, 0.32, 0.48];
-	const ballRef = useRef(null);
+	const ballRef = useRef(null)
 
 	// #780606
+	useFrame(() => {
+		if (ballRef.current) {
+			// ballRef.current.position.z -= 0.2 // moving away
+			// ballRef.current.rotation.z -= 0.3 // right spin
+			// ballRef.current.rotation.x -= 0.3 // backspin
+			// ballRef.current.rotation.y -= 0.3 // slider i guess
+		}	
+	})
 
 	return (
 		<group position={[2, 2, 1]} ref={ballRef}>
@@ -50,7 +58,7 @@ export default function Home() {
 		<div className="h-screen">
 			<Canvas
 				className="bg-blue-500 w-screen h-screen"
-				camera={{ position: [0, 5, 10], rotation: [0, 0, 0] }}
+				camera={{ position: [0, 5, 10] }}
 			>
 				<axesHelper args={[30]} />
 				<gridHelper args={[20, 20]} />
