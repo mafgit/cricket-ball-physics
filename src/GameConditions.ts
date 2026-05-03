@@ -10,14 +10,16 @@ class GameConditions {
 	gravityAcc!: number;
 	velocity!: { x: number; y: number; z: number };
 	ballRef?: any;
-	initialBallPosition: number[]
+	initialBallPosition: number[];
+	verticalRetainOnBounce!: number;
+	coefficientOfFriction!: number;
 
-	constructor() {
+	constructor(vKph: number, vAngle: number, hAngle: number) {
 		this.initialBallPosition = [-0.7, 1.72, 10.06];
-		this.reinitializeAnim();
+		this.reinitializeAnim(vKph, vAngle, hAngle);
 	}
 
-	reinitializeAnim(vKph = 100, vAngle = -3, hAngle = 271.5) {
+	reinitializeAnim(vKph: number, vAngle: number, hAngle: number) {
 		// at release
 		// wrt bowler
 		this.velKph = vKph;
@@ -60,7 +62,10 @@ class GameConditions {
 
 		this.timeElapsed = 0;
 		this.stopRef = false;
+
+		this.verticalRetainOnBounce = 0.75;
+		this.coefficientOfFriction = 0.3;
 	}
 }
 
-export const gameConditions = new GameConditions();
+export const gameConditions = new GameConditions(100, -3, 271.6);

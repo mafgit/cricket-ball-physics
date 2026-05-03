@@ -1,14 +1,15 @@
 import { gameConditions } from "@/GameConditions";
 import { useFrame } from "@react-three/fiber";
 import { useRef } from "react";
-import { type Mesh } from "three";
+import { type Group } from "three";
 
 export default function Ball() {
 	const ballRadius = 0.036;
 	const seamHeight = 0;
 	const seamThickness = 0.001;
 	const seamOffsets = [-0.01, -0.007, -0.003, 0.003, 0.007, 0.01];
-	const ballRef = useRef<Mesh>(null);
+	const ballRef = useRef<Group>(null);
+
 	gameConditions.ballRef = ballRef.current;
 
 	useFrame((state, deltaSec) => {
@@ -16,11 +17,56 @@ export default function Ball() {
 			gameConditions.timeElapsed += deltaSec;
 		} else {
 			if (gameConditions.stopRef === true || !ballRef.current) return;
-			// ballRef.current.position.z -= 0.2 // moving away
 			// ballRef.current.rotation.z -= 0.3 // right spin
 			// ballRef.current.rotation.x -= 0.3 // backspin
 			// ballRef.current.rotation.y -= 0.3 // slider i guess
 
+			// console.log(gameConditions.velocity.z);
+
+			// updating velocities
+			const v = Math.sqrt(
+				gameConditions.velocity.y ** 2 +
+					gameConditions.velocity.z ** 2 +
+					gameConditions.velocity.x ** 2,
+			);
+			const accelerationDrag = v ** 2 * gameConditions.dragFactor;
+			gameConditions.velocity.y +=
+				(gameConditions.gravityAcc +
+					(gameConditions.velocity.y / v) * accelerationDrag) *
+				deltaSec;
+			gameConditions.velocity.z -=
+				(gameConditions.velocity.z / v) * accelerationDrag * deltaSec;
+			gameConditions.velocity.x -=
+				(gameConditions.velocity.x / v) * accelerationDrag * deltaSec;
+
+			// if (Math.abs(gameConditions.velocity.x) < 0.5)
+			// 	gameConditions.velocity.x = 0;
+			// if (Math.abs(gameConditions.velocity.y) < 0.5)
+			// 	gameConditions.velocity.y = 0;
+			// if (Math.abs(gameConditions.velocity.z) < 0.001)
+			// 	gameConditions.velocity.z = 0;
+
+			// stop anim
+			if (ballRef.current.position.z <= -120) {
+				gameConditions.stopRef = true;
+				gameConditions.timeElapsed = 0;
+			}
+
+			// console.log(gameConditions.velocity);
+			// bounce
+			if (ballRef.current.position.y <= ballRadius) {
+				gameConditions.velocity.y *=
+					-gameConditions.verticalRetainOnBounce;
+				ballRef.current.position.y = ballRadius
+
+				gameConditions.velocity.z *=
+					1 - gameConditions.coefficientOfFriction;
+
+				gameConditions.velocity.x *=
+					1 - gameConditions.coefficientOfFriction;
+			}
+
+			// updating positions
 			ballRef.current.position.z += gameConditions.velocity.z * deltaSec;
 			ballRef.current.position.y = Math.max(
 				ballRadius,
@@ -28,38 +74,14 @@ export default function Ball() {
 					gameConditions.velocity.y * deltaSec,
 			);
 			ballRef.current.position.x += gameConditions.velocity.x * deltaSec;
-
-			const v = Math.sqrt(
-				gameConditions.velocity.y ** 2 +
-					gameConditions.velocity.z ** 2 +
-					gameConditions.velocity.x ** 2,
-			);
-			const accelerationDrag = v * gameConditions.dragFactor ** 2;
-			gameConditions.velocity.y +=
-				(gameConditions.gravityAcc +
-					(gameConditions.velocity.y / v) * accelerationDrag) *
-				deltaSec;
-			gameConditions.velocity.z +=
-				(gameConditions.velocity.z / v) * accelerationDrag * deltaSec;
-			gameConditions.velocity.x -=
-				(gameConditions.velocity.x / v) * accelerationDrag * deltaSec;
-
-			if (ballRef.current.position.z <= -10) {
-				gameConditions.stopRef = true;
-				gameConditions.timeElapsed = 0;
-			}
-			if (ballRef.current.position.y <= ballRadius) {
-				console.log(gameConditions.velocity);
-				gameConditions.velocity.y *= -1;
-			}
 		}
 	});
 
 	return (
 		<group
-			position={gameConditions.initialBallPosition}
+			position={gameConditions.initialBallPosition as any}
 			ref={ballRef}
-			// scale={[10, 10, 10]}
+			scale={[10, 10, 10]}
 		>
 			<mesh castShadow receiveShadow>
 				<sphereGeometry args={[ballRadius, 32, 32]} />

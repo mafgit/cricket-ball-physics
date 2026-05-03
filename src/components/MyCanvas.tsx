@@ -4,23 +4,42 @@ import {
 	ContactShadows,
 	Environment,
 	FirstPersonControls,
+	Html,
 	OrbitControls,
 	PointerLockControls,
 	Sky,
 	Stats,
+	useProgress,
 } from "@react-three/drei";
 import Ball from "./Ball";
 import Ground from "./Ground";
 import Player from "./Player";
 import { gameConditions } from "@/GameConditions";
-import { useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef } from "react";
 
 const sunPos = [-20, 40, 20];
 const restartAnimListener = (e: KeyboardEvent) => {
 	if (e.key.toLowerCase() === "r") {
-		gameConditions.reinitializeAnim();
+		gameConditions.reinitializeAnim(100, -3, 271.6);
 	}
 };
+
+function Loader() {
+	const { progress } = useProgress();
+
+	return (
+		<Html center>
+			<h1>Cricket Ball Physics Simulator</h1>
+			<div className="w-[300px] h-[30px] bg-black p-2 rounded-lg">
+				<div
+					className="h-full bg-white rounded-lg"
+					style={{ width: progress + "%" }}
+				></div>
+			</div>
+			<p>{Math.round(progress) + "%"}</p>
+		</Html>
+	);
+}
 
 export default function MyCanvas() {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -50,39 +69,41 @@ export default function MyCanvas() {
 				}}
 				shadows
 			>
-				{/* helpers */}
-				{/* <axesHelper args={[30]} />
+				<Suspense fallback={<Loader />}>
+					{/* helpers */}
+					{/* <axesHelper args={[30]} />
 			<gridHelper args={[20, 20]} /> */}
-				<Stats />
+					<Stats />
 
-				{/* <OrbitControls /> */}
+					{/* <OrbitControls /> */}
 
-				{/* <FirstPersonControls /> */}
-				<PointerLockControls />
-				{/* <Player /> */}
+					{/* <FirstPersonControls /> */}
+					<PointerLockControls />
+					{/* <Player /> */}
 
-				{/* environment */}
-				<Environment preset="park" />
-				<Sky sunPosition={sunPos} />
+					{/* environment */}
+					<Environment preset="park" />
+					<Sky sunPosition={sunPos as any} />
 
-				{/* light */}
-				<ambientLight intensity={0.3} />
-				<directionalLight
-					position={sunPos}
-					shadow-camera-left={-20}
-					shadow-camera-right={20}
-					shadow-camera-top={30}
-					shadow-camera-bottom={-30}
-					shadow-camera-near={10}
-					shadow-camera-far={60}
-					shadow-mapSize={[2048, 2048]}
-					intensity={2}
-					castShadow
-				/>
+					{/* light */}
+					<ambientLight intensity={0.3} />
+					<directionalLight
+						position={sunPos as any}
+						shadow-camera-left={-20}
+						shadow-camera-right={20}
+						shadow-camera-top={30}
+						shadow-camera-bottom={-30}
+						shadow-camera-near={10}
+						shadow-camera-far={60}
+						shadow-mapSize={[2048, 2048]}
+						intensity={2}
+						castShadow
+					/>
 
-				{/* main */}
-				<Ball />
-				<Ground />
+					{/* main */}
+					<Ball />
+					<Ground />
+				</Suspense>
 			</Canvas>
 		</>
 	);
