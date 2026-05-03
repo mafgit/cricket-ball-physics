@@ -54,7 +54,7 @@ export default function Ball() {
 					deltaSec;
 			} else {
 				gameConditions.velocity.y +=
-					gameConditions.gravityAcc * accelerationDrag * deltaSec;
+					gameConditions.gravityAcc * deltaSec;
 			}
 
 			// if (Math.abs(gameConditions.velocity.x) < 0.5)
@@ -74,7 +74,8 @@ export default function Ball() {
 			// bounce
 			if (ballRef.current.position.y <= ballRadius) {
 				gameConditions.velocity.y *=
-					-gameConditions.verticalRetainOnBounce;
+					-gameConditions.verticalRetainOnBounce *
+					(1 - gameConditions.coefficientOfFriction);
 				ballRef.current.position.y = ballRadius;
 
 				gameConditions.velocity.z *=
