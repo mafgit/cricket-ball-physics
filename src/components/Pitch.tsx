@@ -1,3 +1,4 @@
+import { BufferAttribute } from "three";
 import Crease from "./Crease";
 import Stumps from "./Stumps";
 import TexturedPitchMaterial from "./TexturedPitchMaterial";
@@ -6,7 +7,15 @@ export default function Pitch({ textured = true }) {
 	return (
 		<group position={[0, 0.001, 0]}>
 			<mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
-				<planeGeometry args={[3.66, 22.56, 10, 100]} />
+				<planeGeometry
+					args={[3.66, 22.56, 10, 100]}
+					onUpdate={(g) => {
+						g.setAttribute(
+							"uv2",
+							new BufferAttribute(g.attributes.uv.array, 2),
+						);
+					}}
+				/>
 				{textured ? (
 					<TexturedPitchMaterial />
 				) : (

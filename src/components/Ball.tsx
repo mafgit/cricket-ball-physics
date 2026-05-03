@@ -1,7 +1,11 @@
 import { gameConditions } from "@/GameConditions";
 import { useFrame } from "@react-three/fiber";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { type Group } from "three";
+
+function mpsToKph(v: number) {
+	return v * 3.6;
+}
 
 export default function Ball() {
 	const ballRadius = 0.036;
@@ -10,13 +14,16 @@ export default function Ball() {
 	const seamOffsets = [-0.01, -0.007, -0.003, 0.003, 0.007, 0.01];
 	const ballRef = useRef<Group>(null);
 
-	gameConditions.ballRef = ballRef.current;
+	useEffect(() => {
+		gameConditions.ballRef = ballRef.current;
+	}, []);
 
 	useFrame((state, deltaSec) => {
-		if (gameConditions.timeElapsed < 5) {
+		if (gameConditions.isStopped || !ballRef.current) return;
+
+		if (gameConditions.timeElapsed < 2) {
 			gameConditions.timeElapsed += deltaSec;
 		} else {
-			if (gameConditions.stopRef === true || !ballRef.current) return;
 			// ballRef.current.rotation.z -= 0.3 // right spin
 			// ballRef.current.rotation.x -= 0.3 // backspin
 			// ballRef.current.rotation.y -= 0.3 // slider i guess
@@ -30,14 +37,25 @@ export default function Ball() {
 					gameConditions.velocity.x ** 2,
 			);
 			const accelerationDrag = v ** 2 * gameConditions.dragFactor;
-			gameConditions.velocity.y +=
-				(gameConditions.gravityAcc +
-					(gameConditions.velocity.y / v) * accelerationDrag) *
-				deltaSec;
-			gameConditions.velocity.z -=
-				(gameConditions.velocity.z / v) * accelerationDrag * deltaSec;
-			gameConditions.velocity.x -=
-				(gameConditions.velocity.x / v) * accelerationDrag * deltaSec;
+
+			// division by zero
+			if (v > 1e-6) {
+				gameConditions.velocity.y +=
+					(gameConditions.gravityAcc +
+						(gameConditions.velocity.y / v) * accelerationDrag) *
+					deltaSec;
+				gameConditions.velocity.z -=
+					(gameConditions.velocity.z / v) *
+					accelerationDrag *
+					deltaSec;
+				gameConditions.velocity.x -=
+					(gameConditions.velocity.x / v) *
+					accelerationDrag *
+					deltaSec;
+			} else {
+				gameConditions.velocity.y +=
+					gameConditions.gravityAcc * accelerationDrag * deltaSec;
+			}
 
 			// if (Math.abs(gameConditions.velocity.x) < 0.5)
 			// 	gameConditions.velocity.x = 0;
@@ -48,7 +66,7 @@ export default function Ball() {
 
 			// stop anim
 			if (ballRef.current.position.z <= -120) {
-				gameConditions.stopRef = true;
+				gameConditions.isStopped = true;
 				gameConditions.timeElapsed = 0;
 			}
 
@@ -57,7 +75,7 @@ export default function Ball() {
 			if (ballRef.current.position.y <= ballRadius) {
 				gameConditions.velocity.y *=
 					-gameConditions.verticalRetainOnBounce;
-				ballRef.current.position.y = ballRadius
+				ballRef.current.position.y = ballRadius;
 
 				gameConditions.velocity.z *=
 					1 - gameConditions.coefficientOfFriction;
@@ -74,6 +92,24 @@ export default function Ball() {
 					gameConditions.velocity.y * deltaSec,
 			);
 			ballRef.current.position.x += gameConditions.velocity.x * deltaSec;
+
+			// velocity on overlay showing
+			const velDivX = document.querySelector("#velocity #x") as any;
+			const velDivY = document.querySelector("#velocity #y") as any;
+			const velDivZ = document.querySelector("#velocity #z") as any;
+			const velDivP = document.querySelector("#velocity #p") as any;
+			if (velDivX && velDivY && velDivZ) {
+				velDivX.innerText = mpsToKph(gameConditions.velocity.x).toFixed(
+					2,
+				);
+				velDivY.innerText = mpsToKph(gameConditions.velocity.y).toFixed(
+					2,
+				);
+				velDivZ.innerText = mpsToKph(gameConditions.velocity.z).toFixed(
+					2,
+				);
+				velDivP.innerText = mpsToKph(v).toFixed(2);
+			}
 		}
 	});
 
@@ -81,7 +117,6 @@ export default function Ball() {
 		<group
 			position={gameConditions.initialBallPosition as any}
 			ref={ballRef}
-			scale={[10, 10, 10]}
 		>
 			<mesh castShadow receiveShadow>
 				<sphereGeometry args={[ballRadius, 32, 32]} />

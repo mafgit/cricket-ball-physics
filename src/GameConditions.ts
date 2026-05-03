@@ -2,7 +2,7 @@ import { degToRad } from "three/src/math/MathUtils.js";
 
 class GameConditions {
 	velKph!: number;
-	stopRef!: boolean;
+	isStopped!: boolean;
 	timeElapsed!: number;
 	verticalAngle!: number;
 	horizAngle!: number;
@@ -14,9 +14,11 @@ class GameConditions {
 	verticalRetainOnBounce!: number;
 	coefficientOfFriction!: number;
 
-	constructor(vKph: number, vAngle: number, hAngle: number) {
-		this.initialBallPosition = [-0.7, 1.72, 10.06];
-		this.reinitializeAnim(vKph, vAngle, hAngle);
+	constructor() {
+		this.isStopped = true;
+		this.initialBallPosition = [-0.7, 1.72, 10.06 - 1.32];
+		this.velocity = { x: 0, y: 0, z: 0}
+		
 	}
 
 	reinitializeAnim(vKph: number, vAngle: number, hAngle: number) {
@@ -43,7 +45,7 @@ class GameConditions {
 			y: Vy,
 			z: Vz,
 		};
-		console.log(this.velocity);
+		// console.log(this.velocity);
 
 		this.gravityAcc = -9.807;
 
@@ -61,11 +63,11 @@ class GameConditions {
 		}
 
 		this.timeElapsed = 0;
-		this.stopRef = false;
+		this.isStopped = false;
 
 		this.verticalRetainOnBounce = 0.75;
 		this.coefficientOfFriction = 0.3;
 	}
 }
 
-export const gameConditions = new GameConditions(100, -3, 271.6);
+export const gameConditions = new GameConditions();

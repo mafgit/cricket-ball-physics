@@ -1,3 +1,4 @@
+import { BufferAttribute } from "three";
 import TexturedGrassMaterial from "./TexturedGrassMaterial";
 
 export default function Grass({ textured = true }) {
@@ -7,7 +8,15 @@ export default function Grass({ textured = true }) {
 			rotation={[-Math.PI / 2, 0, 0]}
 			receiveShadow
 		>
-			<circleGeometry args={[70, 100]} />
+			<circleGeometry
+				args={[70, 100]}
+				onUpdate={(g) => {
+					g.setAttribute(
+						"uv2",
+						new BufferAttribute(g.attributes.uv.array, 2),
+					);
+				}}
+			/>
 			{textured ? (
 				<TexturedGrassMaterial />
 			) : (

@@ -1,61 +1,72 @@
 "use client";
 import { Canvas } from "@react-three/fiber";
 import {
-	ContactShadows,
 	Environment,
 	FirstPersonControls,
-	Html,
 	OrbitControls,
 	PointerLockControls,
 	Sky,
 	Stats,
-	useProgress,
 } from "@react-three/drei";
 import Ball from "./Ball";
 import Ground from "./Ground";
 import Player from "./Player";
 import { gameConditions } from "@/GameConditions";
 import { Suspense, useEffect, useRef } from "react";
+import Loader from "./Loader";
+// import { useControls } from "leva";
 
 const sunPos = [-20, 40, 20];
 const restartAnimListener = (e: KeyboardEvent) => {
 	if (e.key.toLowerCase() === "r") {
-		gameConditions.reinitializeAnim(100, -3, 271.6);
+		gameConditions.reinitializeAnim(135, -3, 271.6);
 	}
 };
 
-function Loader() {
-	const { progress } = useProgress();
-
-	return (
-		<Html center>
-			<h1>Cricket Ball Physics Simulator</h1>
-			<div className="w-[300px] h-[30px] bg-black p-2 rounded-lg">
-				<div
-					className="h-full bg-white rounded-lg"
-					style={{ width: progress + "%" }}
-				></div>
-			</div>
-			<p>{Math.round(progress) + "%"}</p>
-		</Html>
-	);
-}
-
 export default function MyCanvas() {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
+	// const { gravityAcc } = useControls({
+	// 	gravityAcc: {
+	// 		min: -40,
+	// 		max: 30,
+	// 		value: -9.807,
+	// 		step: -9.807 / 4,
+	// 	},
+	// });
 
 	useEffect(() => {
 		document.addEventListener("keyup", restartAnimListener);
-		if (canvasRef.current) {
-			canvasRef.current.focus();
-		}
+		// if (canvasRef.current) {
+		// 	canvasRef.current.focus();
+		// }
 
 		return () => document.removeEventListener("keyup", restartAnimListener);
 	}, []);
 
 	return (
 		<>
-			<p className="hint">Replay (R)</p>
+			<p className="hint">Play/Replay (R)</p>
+			<div id="velocity">
+				<p className="font-bold">POV: Batsman</p>
+				<div>
+					<p>+x to left</p>
+					<p id="x">0</p>
+				</div>
+				<div>
+					<p>+y to top</p>
+					<p id="y">0</p>
+				</div>
+
+				<div>
+					<p>+z towards bowler</p>
+					<p id="z">0</p>
+				</div>
+
+				<div>
+					<p>Pace</p>
+					<p id="p">0</p>
+				</div>
+			</div>
 
 			<Canvas
 				ref={canvasRef}

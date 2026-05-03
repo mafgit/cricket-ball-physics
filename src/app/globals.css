@@ -40,3 +40,42 @@ canvas:focus {
 	right: 30px;
 	border-radius: 4px;
 }
+
+#velocity {
+	position: absolute;
+	z-index: 30 !important;
+	top: 60px;
+	opacity: 0.8;
+	background: rgba(15, 15, 15, 0.918);
+	padding: 4px 8px;
+	left: 30px;
+	border-radius: 8px;
+	display: flex;
+	gap: 5px;
+	color: #fff;
+	flex-direction: column;
+
+	#x {
+		background: rgb(255, 119, 119);
+		padding: 2px 4px;
+		border-radius: 4px;
+		color: black;
+		font-weight: bold;
+	}
+
+	#y {
+		background: rgb(137, 255, 137);
+		padding: 2px 4px;
+		border-radius: 4px;
+		color: black;
+		font-weight: bold;
+	}
+
+	#z {
+		background: rgb(255, 255, 135);
+		padding: 2px 4px;
+		border-radius: 4px;
+		color: black;
+		font-weight: bold;
+	}
+}
