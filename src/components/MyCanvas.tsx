@@ -13,34 +13,34 @@ import Ball from "./Ball";
 import Ground from "./Ground";
 import Player from "./Player";
 import { gameConditions } from "@/GameConditions";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 const sunPos = [-20, 40, 20];
+const restartAnimListener = (e: KeyboardEvent) => {
+	if (e.key.toLowerCase() === "r") {
+		gameConditions.reinitializeAnim();
+	}
+};
 
 export default function MyCanvas() {
-	const restartAnimListener = (e: KeyboardEvent) => {
-		if (e.key === 'r') {
-			gameConditions.reinitializeAnim();
-		}
-	};
-	useEffect(() => {
-		window.addEventListener("keyup", restartAnimListener);
+	const canvasRef = useRef<HTMLCanvasElement>(null);
 
-		return () => {
-			window.removeEventListener("keyup", restartAnimListener);
-		};
-	});
+	useEffect(() => {
+		document.addEventListener("keyup", restartAnimListener);
+		if (canvasRef.current) {
+			canvasRef.current.focus();
+		}
+
+		return () => document.removeEventListener("keyup", restartAnimListener);
+	}, []);
 
 	return (
 		<>
-			<p
-				onClick={() => gameConditions.reinitializeAnim()}
-				className="hint"
-			>
-				Replay (R)
-			</p>
+			<p className="hint">Replay (R)</p>
 
 			<Canvas
+				ref={canvasRef}
+				tabIndex={0}
 				className="bg-[#9bc3ff] w-screen h-screen"
 				camera={{
 					position: [0.095, 1.72, -10.06 + 1.32],

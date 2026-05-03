@@ -4,8 +4,8 @@ import Pitch from "./Pitch";
 export default function Ground() {
 	return (
 		<group>
-			<Pitch textured={false} />
-			<Grass textured={false} />
+			<Pitch textured={true} />
+			<Grass textured={true} />
 		</group>
 	);
 }
