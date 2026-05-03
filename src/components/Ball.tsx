@@ -1,21 +1,7 @@
+import { gameConditions } from "@/GameConditions";
 import { useFrame } from "@react-three/fiber";
 import { useRef } from "react";
 import { type Mesh } from "three";
-
-// at releastt
-const speedKph = 140;
-const speedMps = speedKph / 3.6;
-const downwardAngleDeg = -3.2; // length
-const lineAngleDeg = -3;
-
-const toRad = (deg: number) => (Math.PI * deg) / 180;
-
-const Vzx = speedMps * Math.cos(toRad(downwardAngleDeg));
-const Vz = Vzx * Math.cos(toRad(lineAngleDeg));
-const Vx = Vzx * Math.sin(toRad(lineAngleDeg));
-const Vy = speedMps * Math.sin(downwardAngleDeg);
-
-const Ay = -9.8;
 
 export default function Ball() {
 	const ballRadius = 0.036;
@@ -23,44 +9,59 @@ export default function Ball() {
 	const seamThickness = 0.001;
 	const seamOffsets = [-0.01, -0.007, -0.003, 0.003, 0.007, 0.01];
 	const ballRef = useRef<Mesh>(null);
-	const stopRef = useRef(false);
-	const timeElapsed = useRef(0);
-	const velocity = useRef({ x: Vx, y: Vy, z: Vz });
+	gameConditions.ballRef = ballRef.current;
 
-	// #780606
 	useFrame((state, deltaSec) => {
-		if (timeElapsed.current < 5) {
-			timeElapsed.current += deltaSec;
+		if (gameConditions.timeElapsed < 5) {
+			gameConditions.timeElapsed += deltaSec;
 		} else {
-			if (!stopRef.current) {
-				if (ballRef.current) {
-					// ballRef.current.position.z -= 0.2 // moving away
-					// ballRef.current.rotation.z -= 0.3 // right spin
-					// ballRef.current.rotation.x -= 0.3 // backspin
-					// ballRef.current.rotation.y -= 0.3 // slider i guess
+			if (gameConditions.stopRef === true || !ballRef.current) return;
+			// ballRef.current.position.z -= 0.2 // moving away
+			// ballRef.current.rotation.z -= 0.3 // right spin
+			// ballRef.current.rotation.x -= 0.3 // backspin
+			// ballRef.current.rotation.y -= 0.3 // slider i guess
 
-					ballRef.current.position.z -= velocity.current.z * deltaSec;
-					ballRef.current.position.y -= velocity.current.y * deltaSec;
-					ballRef.current.position.x -= velocity.current.x * deltaSec;
-					velocity.current.y -= deltaSec * Ay; // gravity
+			ballRef.current.position.z += gameConditions.velocity.z * deltaSec;
+			ballRef.current.position.y = Math.max(
+				ballRadius,
+				ballRef.current.position.y +
+					gameConditions.velocity.y * deltaSec,
+			);
+			ballRef.current.position.x += gameConditions.velocity.x * deltaSec;
 
-					if (ballRef.current.position.z <= -10.06)
-						stopRef.current = true;
-					if (ballRef.current.position.y <= ballRadius * 2)
-						stopRef.current = true;
-				}
+			const v = Math.sqrt(
+				gameConditions.velocity.y ** 2 +
+					gameConditions.velocity.z ** 2 +
+					gameConditions.velocity.x ** 2,
+			);
+			const accelerationDrag = v * gameConditions.dragFactor ** 2;
+			gameConditions.velocity.y +=
+				(gameConditions.gravityAcc +
+					(gameConditions.velocity.y / v) * accelerationDrag) *
+				deltaSec;
+			gameConditions.velocity.z +=
+				(gameConditions.velocity.z / v) * accelerationDrag * deltaSec;
+			gameConditions.velocity.x -=
+				(gameConditions.velocity.x / v) * accelerationDrag * deltaSec;
+
+			if (ballRef.current.position.z <= -10) {
+				gameConditions.stopRef = true;
+				gameConditions.timeElapsed = 0;
+			}
+			if (ballRef.current.position.y <= ballRadius) {
+				console.log(gameConditions.velocity);
+				gameConditions.velocity.y *= -1;
 			}
 		}
 	});
 
 	return (
 		<group
-			position={[-0.7, 1.72, 10.06]}
+			position={gameConditions.initialBallPosition}
 			ref={ballRef}
-			castShadow
-			receiveShadow
+			// scale={[10, 10, 10]}
 		>
-			<mesh>
+			<mesh castShadow receiveShadow>
 				<sphereGeometry args={[ballRadius, 32, 32]} />
 				<meshStandardMaterial
 					color="#C41E3A"

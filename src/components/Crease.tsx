@@ -1,5 +1,3 @@
-import { DoubleSide } from "three";
-
 export default function Crease({
 	posZ,
 	popping = false,
