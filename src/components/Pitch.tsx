@@ -1,6 +1,7 @@
 import { useTexture } from "@react-three/drei";
 import * as THREE from "three";
 import Crease from "./Crease";
+import Stumps from "./Stumps";
 
 export default function Pitch() {
 	const texture = useTexture({
@@ -21,7 +22,7 @@ export default function Pitch() {
 	}
 
 	return (
-		<group position={[0, 0.2, 0]}>
+		<group position={[0, 0.001, 0]}>
 			<mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
 				<planeGeometry args={[3.66, 22.56, 10, 100]} />
 				<meshStandardMaterial
@@ -39,6 +40,9 @@ export default function Pitch() {
 				<Crease posZ={0} posX={-1.32} vertical />
 				<Crease posZ={0} posX={1.32} vertical />
 			</group>
+
+			<Stumps posZ={10.06}/>
+			<Stumps posZ={-10.06}/>
 		</group>
 	);
 }

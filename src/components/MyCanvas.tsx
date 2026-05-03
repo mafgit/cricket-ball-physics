@@ -14,7 +14,7 @@ export default function MyCanvas() {
 	return (
 		<Canvas
 			className="bg-[#9bc3ff] w-screen h-screen"
-			camera={{ position: [0, 1.72, 5], fov: 75 }}
+			camera={{ position: [0, 1.72, 5], fov: 50 }}
 		>
 			{/* helpers */}
 			{/* <axesHelper args={[30]} />
