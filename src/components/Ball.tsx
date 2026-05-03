@@ -71,11 +71,11 @@ export default function Ball() {
 						1 - gameConditions.coefficientOfFriction;
 					gameConditions.velocity.x *=
 						1 - gameConditions.coefficientOfFriction;
+
+					if (Math.abs(gameConditions.velocity.y) < 0.25)
+						gameConditions.velocity.y = 0;
 				}
 			}
-
-			if (Math.abs(gameConditions.velocity.y) < 0.2)
-				gameConditions.velocity.y = 0;
 
 			// updating positions
 			ballRef.current.position.z += gameConditions.velocity.z * deltaSec;
@@ -86,32 +86,33 @@ export default function Ball() {
 			);
 			ballRef.current.position.x += gameConditions.velocity.x * deltaSec;
 
-			// velocity on overlay showing
+			// updating overlay for speed visuals
 			const velDivX = document.querySelector("#velocity #x") as any;
 			const velDivY = document.querySelector("#velocity #y") as any;
 			const velDivZ = document.querySelector("#velocity #z") as any;
 			const velDivP = document.querySelector("#velocity #p") as any;
 			if (velDivX && velDivY && velDivZ) {
-				velDivX.innerText = mpsToKph(gameConditions.velocity.x).toFixed(
-					2,
-				);
+				// minus signs to invert for POV batsman
+				velDivX.innerText = -mpsToKph(
+					gameConditions.velocity.x,
+				).toFixed(2);
 				velDivY.innerText = mpsToKph(gameConditions.velocity.y).toFixed(
 					2,
 				);
-				velDivZ.innerText = mpsToKph(gameConditions.velocity.z).toFixed(
-					2,
-				);
+				velDivZ.innerText = -mpsToKph(
+					gameConditions.velocity.z,
+				).toFixed(2);
 				velDivP.innerText = mpsToKph(v).toFixed(2);
 			}
 
 			// stop anim
-			if (ballRef.current.position.z <= -30) {
+			if (v < 0.01 || ballRef.current.position.z <= -30) {
 				gameConditions.isStopped = true;
 				gameConditions.timeElapsed = 0;
-				velDivX.innerText = 0;
-				velDivY.innerText = 0;
-				velDivZ.innerText = 0;
-				velDivP.innerText = 0;
+				velDivX.innerText = 0.0;
+				velDivY.innerText = 0.0;
+				velDivZ.innerText = 0.0;
+				velDivP.innerText = 0.0;
 			}
 		}
 	});

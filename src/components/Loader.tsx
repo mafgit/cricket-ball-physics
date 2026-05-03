@@ -5,7 +5,7 @@ export default function Loader() {
 
 	return (
 		<Html center>
-			<h1>Cricket Ball Physics Simulator</h1>
+			<h1>🏏 Cricket Ball Physics Simulator</h1>
 			<div className="w-[300px] h-[30px] bg-black p-2 rounded-lg">
 				<div
 					className="h-full bg-white rounded-lg"

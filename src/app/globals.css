@@ -33,22 +33,21 @@ canvas:focus {
 	position: absolute;
 	z-index: 30 !important;
 	top: 10px;
-	background: white;
-	cursor: pointer !important;
+	background: rgba(15, 15, 15, 0.753);
 	padding: 4px 8px;
-	opacity: 0.8;
+	color: #fff !important;
 	right: 30px;
-	font-size:12px;
+	font-size: 0.8rem;
 	border-radius: 4px;
 }
 
 #velocity {
 	position: absolute;
 	z-index: 30 !important;
-	top: 60px;
-	font-size:12px;
+	top: 80px;
+	font-size: 0.9rem;
 	opacity: 0.8;
-	background: rgba(15, 15, 15, 0.918);
+	background: rgba(15, 15, 15, 0.753);
 	padding: 4px 8px;
 	left: 30px;
 	border-radius: 8px;
@@ -80,4 +79,10 @@ canvas:focus {
 		color: black;
 		font-weight: bold;
 	}
+}
+
+.fps {
+	top: 20px !important;
+	left: 30px !important;
+	position: absolute !important;
 }

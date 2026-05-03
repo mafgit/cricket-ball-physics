@@ -44,30 +44,6 @@ export default function MyCanvas() {
 	}, []);
 
 	return (
-		<>
-			<p className="hint">Play/Replay (R)</p>
-			<div id="velocity">
-				<p className="font-bold">POV: Batsman</p>
-				<div>
-					<p>+x to left</p>
-					<p id="x">0</p>
-				</div>
-				<div>
-					<p>+y to top</p>
-					<p id="y">0</p>
-				</div>
-
-				<div>
-					<p>+z towards bowler</p>
-					<p id="z">0</p>
-				</div>
-
-				<div>
-					<p>Pace</p>
-					<p id="p">0</p>
-				</div>
-			</div>
-
 			<Canvas
 				ref={canvasRef}
 				tabIndex={0}
@@ -83,7 +59,7 @@ export default function MyCanvas() {
 				{/* helpers */}
 				{/* <axesHelper args={[30]} />
 			<gridHelper args={[20, 20]} /> */}
-				<Stats />
+				<Stats className="fps" />
 
 				{/* <OrbitControls /> */}
 
@@ -116,6 +92,5 @@ export default function MyCanvas() {
 					<Ground />
 				</Suspense>
 			</Canvas>
-		</>
 	);
 }
