@@ -12,7 +12,7 @@ class GameConditions {
 	ballRef?: any;
 	coefficientOfRestitution!: number;
 	coefficientOfFriction!: number;
-	// acceleration: { x: number; y: number; z: number };
+	acceleration!: { x: number; y: number; z: number };
 
 	htmlVelX: HTMLElement | undefined;
 	htmlVelY: HTMLElement | undefined;
@@ -20,13 +20,10 @@ class GameConditions {
 	htmlPace: HTMLElement | undefined;
 
 	constructor() {
-		this.isStopped = true;
-
-		this.velocity = { x: 0, y: 0, z: 0 };
-		// this.acceleration = { x: 0, y: 0, z: 0 };
+		this.clearAnim();
 	}
 
-	reinitializeAnim(
+	startAnim(
 		speedKph: number,
 		verticalAngle: number,
 		horizAngle: number,
@@ -58,8 +55,6 @@ class GameConditions {
 		};
 		// console.log(this.velocity);
 
-		this.gravityAcc = -9.807;
-
 		// air
 		const airDensity = 1.255; // kg/m^3
 		const dragCoeff = 0.45; // for sphere
@@ -82,12 +77,14 @@ class GameConditions {
 		this.updateHtmlOverlay(0, 0, 0, 0);
 	}
 
-	endAnim() {
+	clearAnim() {
 		this.isStopped = true;
 		this.timeElapsed = 0;
 
+		this.gravityAcc = -9.807;
+
 		this.velocity = { x: 0, y: 0, z: 0 };
-		// this.acceleration = { x: 0, y: this.gravityAcc, z: 0 };
+		this.acceleration = { x: 0, y: this.gravityAcc, z: 0 };
 
 		this.updateHtmlOverlay(0, 0, 0, 0);
 	}

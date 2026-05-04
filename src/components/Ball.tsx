@@ -36,21 +36,22 @@ export default function Ball() {
 		// CoR applies only to Vy, only on bounce
 		// CoF applies to Vx and Vz, only on bounce
 
-		// applying drag against all velocities
 		let { x: vx, y: vy, z: vz } = gameConditions.velocity;
+		let { x: ax, y: ay, z: az } = gameConditions.acceleration;
 		let { x: px, y: py, z: pz } = gameConditions.ballRef.position;
 
+		// updating accelerations/forces
 		const vMagnitude = Math.sqrt(vy ** 2 + vz ** 2 + vx ** 2);
-
 		if (vMagnitude > 1e-5) {
 			const dragAcc = vMagnitude ** 2 * gameConditions.dragFactor;
-			vx -= (vx / vMagnitude) * dragAcc * deltaSec;
-			vy -= (vy / vMagnitude) * dragAcc * deltaSec;
-			vz -= (vz / vMagnitude) * dragAcc * deltaSec;
+			ax -= (vx / vMagnitude) * dragAcc;
+			ay -= (vy / vMagnitude) * dragAcc;
+			az -= (vz / vMagnitude) * dragAcc;
 		}
 
-		// applying gravity on vy
-		vy += gameConditions.gravityAcc * deltaSec;
+		vx += ax * deltaSec;
+		vy += ay * deltaSec;
+		vz += az * deltaSec;
 
 		// updating positions
 		px += vx * deltaSec;
@@ -78,7 +79,7 @@ export default function Ball() {
 
 		// stop anim
 		if (vMagnitude < 0.05 || ballRef.current.position.z <= -100) {
-			gameConditions.endAnim();
+			gameConditions.clearAnim();
 		}
 	});
 
