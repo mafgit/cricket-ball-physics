@@ -19,7 +19,7 @@ export default function Pitch({ textured = true }) {
 				{textured ? (
 					<TexturedPitchMaterial />
 				) : (
-					<meshStandardMaterial color="#E2D1A7" />
+					<meshStandardMaterial color="#D2B48C" />
 				)}
 			</mesh>
 

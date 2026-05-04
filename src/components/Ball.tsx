@@ -1,7 +1,7 @@
 import { gameConditions } from "@/GameConditions";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
-import { type Group } from "three";
+import { Quaternion, Vector3, type Group } from "three";
 
 export default function Ball() {
 	// const ballRadius = 0.036;
@@ -12,7 +12,7 @@ export default function Ball() {
 	const ballRef = useRef<Group>(null);
 
 	useEffect(() => {
-		gameConditions.ballRef = ballRef.current;
+		if (ballRef.current) gameConditions.ballRef = ballRef.current;
 		gameConditions.htmlVelX = document.querySelector("#velocity #x")!;
 		gameConditions.htmlVelY = document.querySelector("#velocity #y")!;
 		gameConditions.htmlVelZ = document.querySelector("#velocity #z")!;
@@ -20,17 +20,13 @@ export default function Ball() {
 	}, []);
 
 	useFrame((state, deltaSec) => {
-		if (gameConditions.isStopped || !ballRef.current) return;
+		if (gameConditions.isStopped || !gameConditions.ballRef) return;
 
 		// 2 sec delay when anim starts
 		if (gameConditions.timeElapsed < gameConditions.runupDuration) {
 			gameConditions.timeElapsed += deltaSec;
 			return;
 		}
-
-		// ballRef.current.rotation.z -= 0.3 // right spin
-		// ballRef.current.rotation.x -= 0.3 // backspin
-		// ballRef.current.rotation.y -= 0.3 // slider i guess
 
 		// drag force applies against all velocity components only during flight
 		// gravity affects only Vy at all times
@@ -39,7 +35,6 @@ export default function Ball() {
 
 		let { x: vx, y: vy, z: vz } = gameConditions.velocity;
 		let { x: px, y: py, z: pz } = gameConditions.ballRef.position;
-		let { x: rx, y: ry, z: rz } = gameConditions.ballRef.rotation;
 		let { x: wx, y: wy, z: wz } = gameConditions.angularVelocity;
 
 		let ax = 0,
@@ -57,7 +52,7 @@ export default function Ball() {
 			az -= (vz / vMagnitude) * dragAcc;
 		}
 
-		// magnus effect (spin & rotation)
+		// magnus effect (swing in air DUE TO SPIN/ROTATION, perpendicular to angular velocity and velocity, like free kick swing)
 		const crossProd = {
 			x: wy * vz - wz * vy,
 			y: wz * vx - wx * vz,
@@ -82,16 +77,63 @@ export default function Ball() {
 		pz += vz * deltaSec;
 
 		// -------- updating rotations --------
-		rx += wx * deltaSec;
-		ry += wy * deltaSec;
-		rz += wz * deltaSec;
+		const deltaTheta = new Quaternion();
+		const angularAxis = new Vector3(wx, wy, wz);
+		const angularMag = angularAxis.length();
+
+		if (angularMag > 1e-5) {
+			angularAxis.normalize(); // get angular axis's directions
+			deltaTheta.setFromAxisAngle(angularAxis, angularMag * deltaSec);
+			gameConditions.orientationTheta.multiplyQuaternions(
+				deltaTheta,
+				gameConditions.orientationTheta,
+			);
+			gameConditions.orientationTheta.normalize();
+			gameConditions.ballRef.quaternion.copy(
+				gameConditions.orientationTheta,
+			);
+		}
 
 		// -------- on contact with ground --------
 		if (py <= ballRadius && vy < 0) {
 			py = ballRadius; // fix if below pitch
-			vy *= -gameConditions.coefficientOfRestitution;
-			vx *= 1 - gameConditions.coefficientOfFriction;
-			vz *= 1 - gameConditions.coefficientOfFriction;
+
+			let vyBefore = vy;
+			vy *= -gameConditions.coefficientOfRestitution; // opposite direction with retained bounce
+
+			// vx *= 1 - gameConditions.coefficientOfFriction; // x and z affected by friction
+			// vz *= 1 - gameConditions.coefficientOfFriction;
+
+			// surface velocity of point of contact wrt ball (i.e, below its center) (0, -ballRadius, 0)
+			const vSurfaceX = wz * ballRadius;
+			const vSurfaceZ = -wx * ballRadius;
+
+			const vSlideX = vx - vSurfaceX;
+			const vSlideZ = vz - vSurfaceZ;
+			const vSlideMag = Math.sqrt(vSlideX ** 2 + vSlideZ ** 2);
+
+			// friction impulse
+			if (vSlideMag > 1e-5) {
+				const frictionScale =
+					vyBefore *
+					gameConditions.coefficientOfRestitution *
+					gameConditions.coefficientOfFriction;
+				// how hard it hit the ground
+
+				const fx =
+					Math.min(frictionScale, Math.abs(vSlideX)) *
+					Math.sign(vSlideX);
+				const fz =
+					Math.min(frictionScale, Math.abs(vSlideZ)) *
+					Math.sign(vSlideZ);
+
+				vx -= fx;
+				vz -= fz;
+			}
+
+			wx *= 0.6;
+			wy *= 0.6;
+			wz *= 0.6;
 		}
 
 		// -------- updating all inside the main object --------
@@ -99,19 +141,13 @@ export default function Ball() {
 		gameConditions.velocity.y = vy;
 		gameConditions.velocity.z = vz;
 
-		gameConditions.ballRef.position.x = px;
-		gameConditions.ballRef.position.y = py;
-		gameConditions.ballRef.position.z = pz;
-
-		gameConditions.ballRef.rotation.x = rx;
-		gameConditions.ballRef.rotation.y = ry;
-		gameConditions.ballRef.rotation.z = rz;
+		gameConditions.ballRef.position.set(px, py, pz);
 
 		// updating overlay for speed visuals (opposite signs to adjust for batsman POV)
 		gameConditions.updateHtmlOverlay(-vx, vy, -vz, vMagnitude);
 
 		// stop anim
-		if (vMagnitude < 0.1 || ballRef.current.position.z <= -50) {
+		if (vMagnitude < 0.1 || gameConditions.ballRef.position.z <= -50) {
 			gameConditions.clearAnim();
 		}
 	});
@@ -144,7 +180,7 @@ export default function Ball() {
 							rotation={[0, Math.PI / 2, 0]}
 						>
 							<torusGeometry
-								args={[seamRadius, seamThickness, 8, 18]}
+								args={[seamRadius, seamThickness, 30, 50]}
 							/>
 							<meshStandardMaterial
 								color="#ffffff"

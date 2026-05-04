@@ -17,19 +17,34 @@ import { Suspense, useEffect, useRef } from "react";
 import Loader from "./Loader";
 // import { useControls } from "leva";
 
+const fastParams = {
+	speedKph: 130,
+	verticalAngle: -0.17,
+	horizAngle: 4.74,
+	angularVelocity: [2 * Math.PI, 0.3, 0],
+	seamAngle: [0, -0.2, 0],
+};
+
+const spinParams = {
+	speedKph: 30,
+	verticalAngle: -0.02,
+	horizAngle: 4.77,
+	angularVelocity: [-10, 0, -20],
+	seamAngle: [0, Math.PI/2 + 0.5, 0],
+};
+
 const sunPos = [-20, 40, 20];
 const restartAnimListener = (e: KeyboardEvent) => {
 	if (e.key.toLowerCase() === "r") {
 		gameConditions.startAnim({
-			speedKph: 160,
-			verticalAngle: -0.17,
-			horizAngle: 4.74,
-			spinRadsPerSec: [2 * Math.PI, 0.3, 0],
-			initialBallPosition: [-0.7, 1.72, 10.06 - 1.32],
-			seamAngle: [0, -0.2, 0],
+			...spinParams,
+			initialBallPosition: [-0.3, 1.85, 10.06 - 1.32],
 		});
 	}
 };
+
+const bowlerPosition = [-0.35, 1.72, 10.06 - 1];
+const batterPosition = [0.095, 1.72, -10.06 + 1.32];
 
 export default function MyCanvas() {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -57,8 +72,8 @@ export default function MyCanvas() {
 			tabIndex={0}
 			className="bg-[#9bc3ff] w-screen h-screen"
 			camera={{
-				position: [0.095, 1.72, -10.06 + 1.32],
-				fov: 60,
+				position: bowlerPosition as any,
+				fov: 65,
 				near: 0.1,
 				far: 1000,
 			}}
@@ -76,7 +91,7 @@ export default function MyCanvas() {
 			{/* <Player /> */}
 
 			{/* environment */}
-			<Environment preset="park" />
+			{/* <Environment preset="park" /> */}
 			<Sky sunPosition={sunPos as any} />
 
 			{/* light */}

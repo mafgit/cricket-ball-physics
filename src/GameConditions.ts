@@ -1,3 +1,8 @@
+import { Euler, type Group, Quaternion, Vector3 } from "three";
+
+/**
+ * **angularVelocity**: to understand it, stick a rod along the ball and think of rotating it around that rod. The rod is the axis that we must set w[axis] high to.
+ */
 class GameConditions {
 	speedKph!: number;
 	isStopped!: boolean;
@@ -7,7 +12,7 @@ class GameConditions {
 	dragFactor!: number;
 	gravityAcc!: number;
 	velocity!: { x: number; y: number; z: number };
-	ballRef?: any;
+	ballRef?: Group;
 	coefficientOfRestitution!: number;
 	coefficientOfFriction!: number;
 	angularVelocity!: { x: number; y: number; z: number };
@@ -19,6 +24,7 @@ class GameConditions {
 	htmlVelZ: HTMLElement | undefined;
 	htmlPace: HTMLElement | undefined;
 	initialBallPosition!: number[];
+	orientationTheta!: Quaternion;
 
 	constructor() {
 		this.clearAnim();
@@ -28,14 +34,14 @@ class GameConditions {
 		speedKph,
 		verticalAngle,
 		horizAngle,
-		spinRadsPerSec,
+		angularVelocity,
 		seamAngle,
 		initialBallPosition,
 	}: {
 		speedKph: number;
 		verticalAngle: number;
 		horizAngle: number;
-		spinRadsPerSec: number[];
+		angularVelocity: number[];
 		seamAngle: number[];
 		initialBallPosition: number[];
 	}) {
@@ -60,9 +66,9 @@ class GameConditions {
 		};
 
 		this.angularVelocity = {
-			x: spinRadsPerSec[0],
-			y: spinRadsPerSec[1],
-			z: spinRadsPerSec[2],
+			x: angularVelocity[0],
+			y: angularVelocity[1],
+			z: angularVelocity[2],
 		};
 
 		// air
@@ -72,27 +78,35 @@ class GameConditions {
 		const crossSecArea = 0.0042; // for cricket ball approx
 		this.dragFactor = (0.5 * airDensity * dragCoeff * crossSecArea) / mass;
 
-		const magnusCoefficient = 1.2;
+		const magnusCoefficient = 0.2;
 		this.magnusStrength =
 			(0.5 * magnusCoefficient * airDensity * crossSecArea) / mass;
 
 		if (this.ballRef) {
-			this.ballRef.position.x = initialBallPosition[0];
-			this.ballRef.position.y = initialBallPosition[1];
-			this.ballRef.position.z = initialBallPosition[2];
+			this.ballRef.position.set(
+				initialBallPosition[0],
+				initialBallPosition[1],
+				initialBallPosition[2],
+			);
 
-			this.ballRef.rotation.x = seamAngle[0];
-			this.ballRef.rotation.y = seamAngle[1];
-			this.ballRef.rotation.z = seamAngle[2];
+			const euler = new Euler(
+				seamAngle[0],
+				seamAngle[1],
+				seamAngle[2],
+				"XYZ",
+			);
+
+			this.orientationTheta = new Quaternion().setFromEuler(euler);
+			this.ballRef.rotation.setFromQuaternion(this.orientationTheta)
 		}
 
 		this.timeElapsed = 0;
 		this.isStopped = false;
-		this.runupDuration = 5; // seconds
+		this.runupDuration = 2; // seconds
 		this.initialBallPosition = initialBallPosition;
 
-		this.coefficientOfRestitution = 0.5; // more = more bounce preserved
-		this.coefficientOfFriction = 0.075; // less = more energy velocity preserved
+		this.coefficientOfRestitution = 0.6; // more = more bounce preserved
+		this.coefficientOfFriction = 0.1; // less = more energy velocity preserved
 
 		this.updateHtmlOverlay(0, 0, 0, 0);
 	}

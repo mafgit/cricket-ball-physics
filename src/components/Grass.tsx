@@ -20,7 +20,7 @@ export default function Grass({ textured = true }) {
 			{textured ? (
 				<TexturedGrassMaterial />
 			) : (
-				<meshStandardMaterial color="green" />
+				<meshStandardMaterial color="#41980a" />
 			)}
 		</mesh>
 	);
