@@ -20,9 +20,9 @@ import Loader from "./Loader";
 const fastParams = {
 	speedKph: 130,
 	verticalAngle: -0.17,
-	horizAngle: 4.74,
-	angularVelocity: [2 * Math.PI, 0.3, 0],
-	seamAngle: [0, -0.2, 0],
+	horizAngle: 0.02,
+	angularVelocity: [30, 0, 15],
+	seamAngle: [0, -0.4, 0],
 };
 
 const spinParams = {
@@ -37,8 +37,8 @@ const sunPos = [-20, 40, 20];
 const restartAnimListener = (e: KeyboardEvent) => {
 	if (e.key.toLowerCase() === "r") {
 		gameConditions.startAnim({
-			...spinParams,
-			initialBallPosition: [-0.3, 1.85, 10.06 - 1.32],
+			...fastParams,
+			initialBallPosition: [-0.6, 1.85, 10.06 - 1.32],
 		});
 	}
 };
@@ -72,7 +72,7 @@ export default function MyCanvas() {
 			tabIndex={0}
 			className="bg-[#9bc3ff] w-screen h-screen"
 			camera={{
-				position: bowlerPosition as any,
+				position: batterPosition as any,
 				fov: 65,
 				near: 0.1,
 				far: 1000,

@@ -1,5 +1,25 @@
 import { Euler, type Group, Quaternion, Vector3 } from "three";
 
+const hardPitch = {
+	cor: 0.6,
+	cof: 0.4,
+};
+
+const grassyPitch = {
+	cor: 0.51,
+	cof: 0.3,
+};
+
+const dryDustyPitch = {
+	cor: 0.44,
+	cof: 0.63,
+};
+
+const softPitch = {
+	cor: 0.35,
+	cof: 0.25,
+};
+
 /**
  * **angularVelocity**: to understand it, stick a rod along the ball and think of rotating it around that rod. The rod is the axis that we must set w[axis] high to.
  */
@@ -52,11 +72,12 @@ class GameConditions {
 		this.horizAngle = horizAngle;
 		const speedMps = this.speedKph / 3.6;
 
-		const Vx =
-			speedMps * Math.cos(this.horizAngle) * Math.cos(this.verticalAngle);
-
-		const Vy = speedMps * Math.sin(this.verticalAngle);
 		const Vz =
+			-speedMps *
+			Math.cos(this.verticalAngle) *
+			Math.cos(this.horizAngle);
+		const Vy = speedMps * Math.sin(this.verticalAngle);
+		const Vx =
 			speedMps * Math.cos(this.verticalAngle) * Math.sin(this.horizAngle);
 
 		this.velocity = {
@@ -97,7 +118,7 @@ class GameConditions {
 			);
 
 			this.orientationTheta = new Quaternion().setFromEuler(euler);
-			this.ballRef.rotation.setFromQuaternion(this.orientationTheta)
+			this.ballRef.rotation.setFromQuaternion(this.orientationTheta);
 		}
 
 		this.timeElapsed = 0;
@@ -105,8 +126,8 @@ class GameConditions {
 		this.runupDuration = 2; // seconds
 		this.initialBallPosition = initialBallPosition;
 
-		this.coefficientOfRestitution = 0.6; // more = more bounce preserved
-		this.coefficientOfFriction = 0.1; // less = more energy velocity preserved
+		this.coefficientOfRestitution = dryDustyPitch.cor; // more = more bounce preserved
+		this.coefficientOfFriction = dryDustyPitch.cof; // less = more energy velocity preserved
 
 		this.updateHtmlOverlay(0, 0, 0, 0);
 	}

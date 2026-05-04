@@ -140,14 +140,16 @@ export default function Ball() {
 		gameConditions.velocity.x = vx;
 		gameConditions.velocity.y = vy;
 		gameConditions.velocity.z = vz;
-
 		gameConditions.ballRef.position.set(px, py, pz);
+
 
 		// updating overlay for speed visuals (opposite signs to adjust for batsman POV)
 		gameConditions.updateHtmlOverlay(-vx, vy, -vz, vMagnitude);
 
 		// stop anim
-		if (vMagnitude < 0.1 || gameConditions.ballRef.position.z <= -50) {
+		if (vMagnitude < 0.1 
+			// || gameConditions.ballRef.position.z <= -50
+		) {
 			gameConditions.clearAnim();
 		}
 	});
