@@ -1,5 +1,3 @@
-import { degToRad } from "three/src/math/MathUtils.js";
-
 class GameConditions {
 	speedKph!: number;
 	isStopped!: boolean;
@@ -12,7 +10,8 @@ class GameConditions {
 	ballRef?: any;
 	coefficientOfRestitution!: number;
 	coefficientOfFriction!: number;
-	acceleration!: { x: number; y: number; z: number };
+	angularVelocity!: { x: number; y: number; z: number };
+	magnusStrength!: number;
 
 	htmlVelX: HTMLElement | undefined;
 	htmlVelY: HTMLElement | undefined;
@@ -23,12 +22,21 @@ class GameConditions {
 		this.clearAnim();
 	}
 
-	startAnim(
-		speedKph: number,
-		verticalAngle: number,
-		horizAngle: number,
-		initialBallPosition = [-0.7, 1.72, 10.06 - 1.32],
-	) {
+	startAnim({
+		speedKph,
+		verticalAngle,
+		horizAngle,
+		spinAngle,
+		seamAngle,
+		initialBallPosition,
+	}: {
+		speedKph: number;
+		verticalAngle: number;
+		horizAngle: number;
+		spinAngle: number[];
+		seamAngle: number[];
+		initialBallPosition: number[];
+	}) {
 		// at release
 		// wrt bowler
 		this.speedKph = speedKph;
@@ -38,22 +46,23 @@ class GameConditions {
 		const speedMps = this.speedKph / 3.6;
 
 		const Vx =
-			speedMps *
-			Math.cos(degToRad(this.horizAngle)) *
-			Math.cos(degToRad(this.verticalAngle));
+			speedMps * Math.cos(this.horizAngle) * Math.cos(this.verticalAngle);
 
-		const Vy = speedMps * Math.sin(degToRad(this.verticalAngle));
+		const Vy = speedMps * Math.sin(this.verticalAngle);
 		const Vz =
-			speedMps *
-			Math.cos(degToRad(this.verticalAngle)) *
-			Math.sin(degToRad(this.horizAngle));
+			speedMps * Math.cos(this.verticalAngle) * Math.sin(this.horizAngle);
 
 		this.velocity = {
 			x: Vx,
 			y: Vy,
 			z: Vz,
 		};
-		// console.log(this.velocity);
+
+		this.angularVelocity = {
+			x: spinAngle[0],
+			y: spinAngle[1],
+			z: spinAngle[2],
+		};
 
 		// air
 		const airDensity = 1.255; // kg/m^3
@@ -62,10 +71,18 @@ class GameConditions {
 		const crossSecArea = 0.0042; // for cricket ball approx
 		this.dragFactor = (0.5 * airDensity * dragCoeff * crossSecArea) / mass;
 
+		const magnusCoefficient = 1.2;
+		this.magnusStrength =
+			(0.5 * magnusCoefficient * airDensity * crossSecArea) / mass;
+
 		if (this.ballRef) {
 			this.ballRef.position.x = initialBallPosition[0];
 			this.ballRef.position.y = initialBallPosition[1];
 			this.ballRef.position.z = initialBallPosition[2];
+
+			this.ballRef.rotation.x = seamAngle[0];
+			this.ballRef.rotation.y = seamAngle[1];
+			this.ballRef.rotation.z = seamAngle[2];
 		}
 
 		this.timeElapsed = 0;
@@ -84,7 +101,13 @@ class GameConditions {
 		this.gravityAcc = -9.807;
 
 		this.velocity = { x: 0, y: 0, z: 0 };
-		this.acceleration = { x: 0, y: this.gravityAcc, z: 0 };
+		this.angularVelocity = { x: 0, y: 0, z: 0 };
+
+		if (this.ballRef) {
+			this.ballRef.rotation.x = 0;
+			this.ballRef.rotation.y = 0;
+			this.ballRef.rotation.z = 0;
+		}
 
 		this.updateHtmlOverlay(0, 0, 0, 0);
 	}

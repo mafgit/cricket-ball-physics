@@ -19,7 +19,14 @@ import Loader from "./Loader";
 const sunPos = [-20, 40, 20];
 const restartAnimListener = (e: KeyboardEvent) => {
 	if (e.key.toLowerCase() === "r") {
-		gameConditions.startAnim(120, -3, 271.6);
+		gameConditions.startAnim({
+			speedKph: 60,
+			verticalAngle: -0.05,
+			horizAngle: 4.74,
+			spinAngle: [0.2, 0, 0.2],
+			initialBallPosition: [-0.7, 1.72, 10.06 - 1.32],
+			seamAngle: [0, -0.2, 0]
+		});
 	}
 };
 
@@ -44,53 +51,53 @@ export default function MyCanvas() {
 	}, []);
 
 	return (
-			<Canvas
-				ref={canvasRef}
-				tabIndex={0}
-				className="bg-[#9bc3ff] w-screen h-screen"
-				camera={{
-					position: [0.095, 1.72, -10.06 + 1.32],
-					fov: 60,
-					near: 0.1,
-					far: 1000,
-				}}
-				shadows
-			>
-				{/* helpers */}
-				{/* <axesHelper args={[30]} />
+		<Canvas
+			ref={canvasRef}
+			tabIndex={0}
+			className="bg-[#9bc3ff] w-screen h-screen"
+			camera={{
+				position: [0.095, 1.72, -10.06 + 1.32],
+				fov: 60,
+				near: 0.1,
+				far: 1000,
+			}}
+			shadows
+		>
+			{/* helpers */}
+			{/* <axesHelper args={[30]} />
 			<gridHelper args={[20, 20]} /> */}
-				<Stats className="fps" />
+			<Stats className="fps" />
 
-				{/* <OrbitControls /> */}
+			{/* <OrbitControls /> */}
 
-				{/* <FirstPersonControls /> */}
-				<PointerLockControls />
-				{/* <Player /> */}
+			{/* <FirstPersonControls /> */}
+			<PointerLockControls />
+			{/* <Player /> */}
 
-				{/* environment */}
-				<Environment preset="park" />
-				<Sky sunPosition={sunPos as any} />
+			{/* environment */}
+			<Environment preset="park" />
+			<Sky sunPosition={sunPos as any} />
 
-				{/* light */}
-				<ambientLight intensity={0.3} />
-				<directionalLight
-					position={sunPos as any}
-					shadow-camera-left={-20}
-					shadow-camera-right={20}
-					shadow-camera-top={30}
-					shadow-camera-bottom={-30}
-					shadow-camera-near={10}
-					shadow-camera-far={60}
-					shadow-mapSize={[2048, 2048]}
-					intensity={2}
-					castShadow
-				/>
+			{/* light */}
+			<ambientLight intensity={0.3} />
+			<directionalLight
+				position={sunPos as any}
+				shadow-camera-left={-20}
+				shadow-camera-right={20}
+				shadow-camera-top={30}
+				shadow-camera-bottom={-30}
+				shadow-camera-near={10}
+				shadow-camera-far={60}
+				shadow-mapSize={[2048, 2048]}
+				intensity={2}
+				castShadow
+			/>
 
-				{/* main */}
-				<Suspense fallback={<Loader />}>
-					<Ball />
-					<Ground />
-				</Suspense>
-			</Canvas>
+			{/* main */}
+			<Suspense fallback={<Loader />}>
+				<Ball />
+				<Ground />
+			</Suspense>
+		</Canvas>
 	);
 }
