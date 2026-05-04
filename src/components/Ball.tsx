@@ -23,7 +23,7 @@ export default function Ball() {
 		if (gameConditions.isStopped || !ballRef.current) return;
 
 		// 2 sec delay when anim starts
-		if (gameConditions.timeElapsed < 2) {
+		if (gameConditions.timeElapsed < gameConditions.runupDuration) {
 			gameConditions.timeElapsed += deltaSec;
 			return;
 		}
@@ -67,6 +67,10 @@ export default function Ball() {
 		ay += gameConditions.magnusStrength * crossProd.y;
 		az += gameConditions.magnusStrength * crossProd.z;
 
+		wx *= Math.pow(gameConditions.angularDecay, deltaSec);
+		wy *= Math.pow(gameConditions.angularDecay, deltaSec);
+		wz *= Math.pow(gameConditions.angularDecay, deltaSec);
+
 		// -------- updating velocities --------
 		vx += ax * deltaSec;
 		vy += ay * deltaSec;
@@ -94,9 +98,11 @@ export default function Ball() {
 		gameConditions.velocity.x = vx;
 		gameConditions.velocity.y = vy;
 		gameConditions.velocity.z = vz;
+
 		gameConditions.ballRef.position.x = px;
 		gameConditions.ballRef.position.y = py;
 		gameConditions.ballRef.position.z = pz;
+
 		gameConditions.ballRef.rotation.x = rx;
 		gameConditions.ballRef.rotation.y = ry;
 		gameConditions.ballRef.rotation.z = rz;
@@ -105,15 +111,15 @@ export default function Ball() {
 		gameConditions.updateHtmlOverlay(-vx, vy, -vz, vMagnitude);
 
 		// stop anim
-		if (vMagnitude < 0.05 || ballRef.current.position.z <= -9) {
+		if (vMagnitude < 0.1 || ballRef.current.position.z <= -50) {
 			gameConditions.clearAnim();
 		}
 	});
 
 	return (
 		<group
-			// position={initialBallPosition as any}
-			scale={[10, 10, 10]}
+			position={[0, ballRadius, -5]}
+			// scale={[10, 10, 10]}
 			// rotation={}
 			ref={ballRef}
 		>

@@ -44,7 +44,7 @@ canvas:focus {
 #velocity {
 	position: absolute;
 	z-index: 30 !important;
-	top: 80px;
+	top: 70px;
 	font-size: 0.9rem;
 	opacity: 0.8;
 	background: rgba(15, 15, 15, 0.753);
@@ -82,7 +82,7 @@ canvas:focus {
 }
 
 .fps {
-	top: 20px !important;
+	top: 10px !important;
 	left: 30px !important;
 	position: absolute !important;
 }

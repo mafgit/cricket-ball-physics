@@ -4,6 +4,7 @@ import {
 	Environment,
 	FirstPersonControls,
 	OrbitControls,
+	PerspectiveCamera,
 	PointerLockControls,
 	Sky,
 	Stats,
@@ -20,12 +21,12 @@ const sunPos = [-20, 40, 20];
 const restartAnimListener = (e: KeyboardEvent) => {
 	if (e.key.toLowerCase() === "r") {
 		gameConditions.startAnim({
-			speedKph: 60,
-			verticalAngle: -0.05,
+			speedKph: 160,
+			verticalAngle: -0.17,
 			horizAngle: 4.74,
-			spinAngle: [0.2, 0, 0.2],
+			spinRadsPerSec: [2 * Math.PI, 0.3, 0],
 			initialBallPosition: [-0.7, 1.72, 10.06 - 1.32],
-			seamAngle: [0, -0.2, 0]
+			seamAngle: [0, -0.2, 0],
 		});
 	}
 };
@@ -68,10 +69,10 @@ export default function MyCanvas() {
 			<gridHelper args={[20, 20]} /> */}
 			<Stats className="fps" />
 
+			{/* Controls */}
 			{/* <OrbitControls /> */}
-
 			{/* <FirstPersonControls /> */}
-			<PointerLockControls />
+			<PointerLockControls pointerSpeed={1.5} />
 			{/* <Player /> */}
 
 			{/* environment */}

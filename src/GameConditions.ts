@@ -12,11 +12,13 @@ class GameConditions {
 	coefficientOfFriction!: number;
 	angularVelocity!: { x: number; y: number; z: number };
 	magnusStrength!: number;
-
+	angularDecay!: number;
+	runupDuration!: number;
 	htmlVelX: HTMLElement | undefined;
 	htmlVelY: HTMLElement | undefined;
 	htmlVelZ: HTMLElement | undefined;
 	htmlPace: HTMLElement | undefined;
+	initialBallPosition!: number[];
 
 	constructor() {
 		this.clearAnim();
@@ -26,14 +28,14 @@ class GameConditions {
 		speedKph,
 		verticalAngle,
 		horizAngle,
-		spinAngle,
+		spinRadsPerSec,
 		seamAngle,
 		initialBallPosition,
 	}: {
 		speedKph: number;
 		verticalAngle: number;
 		horizAngle: number;
-		spinAngle: number[];
+		spinRadsPerSec: number[];
 		seamAngle: number[];
 		initialBallPosition: number[];
 	}) {
@@ -42,7 +44,6 @@ class GameConditions {
 		this.speedKph = speedKph;
 		this.verticalAngle = verticalAngle;
 		this.horizAngle = horizAngle;
-
 		const speedMps = this.speedKph / 3.6;
 
 		const Vx =
@@ -59,9 +60,9 @@ class GameConditions {
 		};
 
 		this.angularVelocity = {
-			x: spinAngle[0],
-			y: spinAngle[1],
-			z: spinAngle[2],
+			x: spinRadsPerSec[0],
+			y: spinRadsPerSec[1],
+			z: spinRadsPerSec[2],
 		};
 
 		// air
@@ -87,9 +88,11 @@ class GameConditions {
 
 		this.timeElapsed = 0;
 		this.isStopped = false;
+		this.runupDuration = 5; // seconds
+		this.initialBallPosition = initialBallPosition;
 
 		this.coefficientOfRestitution = 0.5; // more = more bounce preserved
-		this.coefficientOfFriction = 0.3; // less = more energy velocity preserved
+		this.coefficientOfFriction = 0.075; // less = more energy velocity preserved
 
 		this.updateHtmlOverlay(0, 0, 0, 0);
 	}
@@ -103,11 +106,7 @@ class GameConditions {
 		this.velocity = { x: 0, y: 0, z: 0 };
 		this.angularVelocity = { x: 0, y: 0, z: 0 };
 
-		if (this.ballRef) {
-			this.ballRef.rotation.x = 0;
-			this.ballRef.rotation.y = 0;
-			this.ballRef.rotation.z = 0;
-		}
+		this.angularDecay = 0.985;
 
 		this.updateHtmlOverlay(0, 0, 0, 0);
 	}
