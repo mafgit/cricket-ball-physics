@@ -18,18 +18,18 @@ import Loader from "./Loader";
 // import { useControls } from "leva";
 
 const fastParams = {
-	speedKph: 130,
-	verticalAngle: -0.17,
-	horizAngle: 0.02,
+	speedKph: 142,
+	verticalAngle: -0.14,
+	horizAngle: 0.03,
 	angularVelocity: [30, 0, 15],
 	seamAngle: [0, -0.4, 0],
 };
 
 const spinParams = {
-	speedKph: 40,
-	verticalAngle: 0.05,
+	speedKph: 83,
+	verticalAngle: 0.01,
 	horizAngle: 0,
-	angularVelocity: [0*-30,0,100],
+	angularVelocity: [0*-30,0,200],
 	// angularVelocity: [-10, 0, -20],
 	seamAngle: [0, Math.PI/2 + 0.5, 0],
 };

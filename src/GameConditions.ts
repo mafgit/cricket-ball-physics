@@ -126,10 +126,10 @@ class GameConditions {
 		this.runupDuration = 2; // seconds
 		this.initialBallPosition = initialBallPosition;
 
-		this.coefficientOfRestitution = dryDustyPitch.cor; // more = more bounce preserved
-		this.coefficientOfFriction = dryDustyPitch.cof; // less = more energy velocity preserved
+		this.coefficientOfRestitution = hardPitch.cor; // more = more bounce preserved
+		this.coefficientOfFriction = hardPitch.cof; // less = more energy velocity preserved
 
-		this.updateHtmlOverlay(0, 0, 0, 0);
+		this.updateHtmlOverlay(0, 0, 0);
 	}
 
 	clearAnim() {
