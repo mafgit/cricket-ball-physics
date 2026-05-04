@@ -26,10 +26,11 @@ const fastParams = {
 };
 
 const spinParams = {
-	speedKph: 30,
-	verticalAngle: -0.02,
-	horizAngle: 4.77,
-	angularVelocity: [-10, 0, -20],
+	speedKph: 40,
+	verticalAngle: 0.05,
+	horizAngle: 0,
+	angularVelocity: [0*-30,0,100],
+	// angularVelocity: [-10, 0, -20],
 	seamAngle: [0, Math.PI/2 + 0.5, 0],
 };
 
@@ -37,7 +38,7 @@ const sunPos = [-20, 40, 20];
 const restartAnimListener = (e: KeyboardEvent) => {
 	if (e.key.toLowerCase() === "r") {
 		gameConditions.startAnim({
-			...fastParams,
+			...spinParams,
 			initialBallPosition: [-0.6, 1.85, 10.06 - 1.32],
 		});
 	}

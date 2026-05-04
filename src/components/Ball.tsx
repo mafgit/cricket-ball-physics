@@ -2,6 +2,7 @@ import { gameConditions } from "@/GameConditions";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
 import { Quaternion, Vector3, type Group } from "three";
+import { clamp } from "three/src/math/MathUtils.js";
 
 export default function Ball() {
 	// const ballRadius = 0.036;
@@ -115,17 +116,22 @@ export default function Ball() {
 			// friction impulse
 			if (vSlideMag > 1e-5) {
 				const frictionScale =
-					vyBefore *
+					Math.abs(vyBefore) *
 					gameConditions.coefficientOfRestitution *
 					gameConditions.coefficientOfFriction;
 				// how hard it hit the ground
-
 				const fx =
-					Math.min(frictionScale, Math.abs(vSlideX)) *
+					clamp(frictionScale, 0, Math.abs(vSlideX)) *
 					Math.sign(vSlideX);
 				const fz =
-					Math.min(frictionScale, Math.abs(vSlideZ)) *
+					clamp(frictionScale, 0, Math.abs(vSlideZ)) *
 					Math.sign(vSlideZ);
+				// const fx =
+				// 	Math.min(frictionScale, Math.abs(vSlideX)) *
+				// 	Math.sign(vSlideX);
+				// const fz =
+				// 	Math.min(frictionScale, Math.abs(vSlideZ)) *
+				// 	Math.sign(vSlideZ);
 
 				vx -= fx;
 				vz -= fz;
@@ -141,13 +147,16 @@ export default function Ball() {
 		gameConditions.velocity.y = vy;
 		gameConditions.velocity.z = vz;
 		gameConditions.ballRef.position.set(px, py, pz);
-
+		gameConditions.angularVelocity.x = wx; // just move inside if contact block if no other things gonna change it
+		gameConditions.angularVelocity.y = wy;
+		gameConditions.angularVelocity.z = wz;
 
 		// updating overlay for speed visuals (opposite signs to adjust for batsman POV)
-		gameConditions.updateHtmlOverlay(-vx, vy, -vz, vMagnitude);
+		gameConditions.updateHtmlOverlay(-vx, vy, -vz);
 
 		// stop anim
-		if (vMagnitude < 0.1 
+		if (
+			vMagnitude < 0.1
 			// || gameConditions.ballRef.position.z <= -50
 		) {
 			gameConditions.clearAnim();

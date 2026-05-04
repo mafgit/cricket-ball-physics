@@ -143,15 +143,15 @@ class GameConditions {
 
 		this.angularDecay = 0.985;
 
-		this.updateHtmlOverlay(0, 0, 0, 0);
+		this.updateHtmlOverlay(0, 0, 0);
 	}
 
-	updateHtmlOverlay(vx: number, vy: number, vz: number, pace: number) {
+	updateHtmlOverlay(vx: number, vy: number, vz: number) {
 		if (this.htmlVelX && this.htmlVelY && this.htmlVelZ && this.htmlPace) {
 			this.htmlVelX.innerText = mpsToKph(vx).toFixed(2);
 			this.htmlVelY.innerText = mpsToKph(vy).toFixed(2);
 			this.htmlVelZ.innerText = mpsToKph(vz).toFixed(2);
-			this.htmlPace.innerText = mpsToKph(pace).toFixed(2);
+			this.htmlPace.innerText = mpsToKph(Math.sqrt(vx**2+vy**2+vz**2)).toFixed(2);
 		}
 	}
 }
