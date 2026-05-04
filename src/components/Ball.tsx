@@ -3,10 +3,6 @@ import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
 import { type Group } from "three";
 
-function mpsToKph(v: number) {
-	return v * 3.6;
-}
-
 export default function Ball() {
 	const ballRadius = 0.036;
 	const seamHeight = 0;
@@ -16,110 +12,79 @@ export default function Ball() {
 
 	useEffect(() => {
 		gameConditions.ballRef = ballRef.current;
+		gameConditions.htmlVelX = document.querySelector("#velocity #x")!;
+		gameConditions.htmlVelY = document.querySelector("#velocity #y")!;
+		gameConditions.htmlVelZ = document.querySelector("#velocity #z")!;
+		gameConditions.htmlPace = document.querySelector("#velocity #p")!;
 	}, []);
 
 	useFrame((state, deltaSec) => {
 		if (gameConditions.isStopped || !ballRef.current) return;
 
+		// 2 sec delay when anim starts
 		if (gameConditions.timeElapsed < 2) {
 			gameConditions.timeElapsed += deltaSec;
-		} else {
-			// ballRef.current.rotation.z -= 0.3 // right spin
-			// ballRef.current.rotation.x -= 0.3 // backspin
-			// ballRef.current.rotation.y -= 0.3 // slider i guess
+			return;
+		}
 
-			// console.log(gameConditions.velocity.z);
+		// ballRef.current.rotation.z -= 0.3 // right spin
+		// ballRef.current.rotation.x -= 0.3 // backspin
+		// ballRef.current.rotation.y -= 0.3 // slider i guess
 
-			// updating velocities
-			const v = Math.sqrt(
-				gameConditions.velocity.y ** 2 +
-					gameConditions.velocity.z ** 2 +
-					gameConditions.velocity.x ** 2,
-			);
-			const accelerationDrag = v ** 2 * gameConditions.dragFactor;
+		// drag force applies against all velocity components only during flight
+		// gravity affects only Vy at all times
+		// CoR applies only to Vy, only on bounce
+		// CoF applies to Vx and Vz, only on bounce
 
-			// division by zero
-			if (v > 1e-6) {
-				gameConditions.velocity.y +=
-					(gameConditions.gravityAcc +
-						(gameConditions.velocity.y / v) * accelerationDrag) *
-					deltaSec;
-				gameConditions.velocity.z -=
-					(gameConditions.velocity.z / v) *
-					accelerationDrag *
-					deltaSec;
-				gameConditions.velocity.x -=
-					(gameConditions.velocity.x / v) *
-					accelerationDrag *
-					deltaSec;
-			} else {
-				gameConditions.velocity.y +=
-					gameConditions.gravityAcc * deltaSec;
-			}
+		// applying drag against all velocities
+		let { x: vx, y: vy, z: vz } = gameConditions.velocity;
+		let { x: px, y: py, z: pz } = gameConditions.ballRef.position;
 
-			// console.log(gameConditions.velocity);
+		const vMagnitude = Math.sqrt(vy ** 2 + vz ** 2 + vx ** 2);
 
-			// touching ground
-			if (ballRef.current.position.y <= ballRadius) {
-				ballRef.current.position.y = ballRadius; // fix if below pitch
+		if (vMagnitude > 1e-5) {
+			const dragAcc = vMagnitude ** 2 * gameConditions.dragFactor;
+			vx -= (vx / vMagnitude) * dragAcc * deltaSec;
+			vy -= (vy / vMagnitude) * dragAcc * deltaSec;
+			vz -= (vz / vMagnitude) * dragAcc * deltaSec;
+		}
 
-				if (gameConditions.velocity.y < 0) {
-					// bouncing
-					gameConditions.velocity.y *=
-						-gameConditions.coefficientOfRestitution;
-					gameConditions.velocity.z *=
-						1 - gameConditions.coefficientOfFriction;
-					gameConditions.velocity.x *=
-						1 - gameConditions.coefficientOfFriction;
+		// applying gravity on vy
+		vy += gameConditions.gravityAcc * deltaSec;
 
-					if (Math.abs(gameConditions.velocity.y) < 0.25)
-						gameConditions.velocity.y = 0;
-				}
-			}
+		// updating positions
+		px += vx * deltaSec;
+		py += vy * deltaSec;
+		pz += vz * deltaSec;
 
-			// updating positions
-			ballRef.current.position.z += gameConditions.velocity.z * deltaSec;
-			ballRef.current.position.y = Math.max(
-				ballRadius,
-				ballRef.current.position.y +
-					gameConditions.velocity.y * deltaSec,
-			);
-			ballRef.current.position.x += gameConditions.velocity.x * deltaSec;
+		// // on contact with ground
+		if (py <= ballRadius && vy < 0) {
+			py = ballRadius; // fix if below pitch
+			vy *= -gameConditions.coefficientOfRestitution;
+			vx *= 1 - gameConditions.coefficientOfFriction;
+			vz *= 1 - gameConditions.coefficientOfFriction;
+		}
 
-			// updating overlay for speed visuals
-			const velDivX = document.querySelector("#velocity #x") as any;
-			const velDivY = document.querySelector("#velocity #y") as any;
-			const velDivZ = document.querySelector("#velocity #z") as any;
-			const velDivP = document.querySelector("#velocity #p") as any;
-			if (velDivX && velDivY && velDivZ) {
-				// minus signs to invert for POV batsman
-				velDivX.innerText = -mpsToKph(
-					gameConditions.velocity.x,
-				).toFixed(2);
-				velDivY.innerText = mpsToKph(gameConditions.velocity.y).toFixed(
-					2,
-				);
-				velDivZ.innerText = -mpsToKph(
-					gameConditions.velocity.z,
-				).toFixed(2);
-				velDivP.innerText = mpsToKph(v).toFixed(2);
-			}
+		// updating inside the main object
+		gameConditions.velocity.x = vx;
+		gameConditions.velocity.y = vy;
+		gameConditions.velocity.z = vz;
+		gameConditions.ballRef.position.x = px;
+		gameConditions.ballRef.position.y = py;
+		gameConditions.ballRef.position.z = pz;
 
-			// stop anim
-			if (v < 0.01 || ballRef.current.position.z <= -30) {
-				gameConditions.isStopped = true;
-				gameConditions.timeElapsed = 0;
-				velDivX.innerText = 0.0;
-				velDivY.innerText = 0.0;
-				velDivZ.innerText = 0.0;
-				velDivP.innerText = 0.0;
-			}
+		// updating overlay for speed visuals (opposite signs to adjust for batsman POV)
+		gameConditions.updateHtmlOverlay(-vx, vy, -vz, vMagnitude);
+
+		// stop anim
+		if (vMagnitude < 0.05 || ballRef.current.position.z <= -100) {
+			gameConditions.endAnim();
 		}
 	});
 
 	return (
 		<group
-			position={gameConditions.initialBallPosition as any}
+			// position={initialBallPosition as any}
 			ref={ballRef}
 		>
 			<mesh castShadow receiveShadow>

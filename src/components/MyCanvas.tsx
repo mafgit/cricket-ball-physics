@@ -19,7 +19,7 @@ import Loader from "./Loader";
 const sunPos = [-20, 40, 20];
 const restartAnimListener = (e: KeyboardEvent) => {
 	if (e.key.toLowerCase() === "r") {
-		gameConditions.reinitializeAnim(90, -3, 271.6);
+		gameConditions.reinitializeAnim(120, -3, 271.6);
 	}
 };
 

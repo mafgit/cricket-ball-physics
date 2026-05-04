@@ -1,7 +1,7 @@
 import { degToRad } from "three/src/math/MathUtils.js";
 
 class GameConditions {
-	velKph!: number;
+	speedKph!: number;
 	isStopped!: boolean;
 	timeElapsed!: number;
 	verticalAngle!: number;
@@ -10,33 +10,44 @@ class GameConditions {
 	gravityAcc!: number;
 	velocity!: { x: number; y: number; z: number };
 	ballRef?: any;
-	initialBallPosition: number[];
 	coefficientOfRestitution!: number;
 	coefficientOfFriction!: number;
+	// acceleration: { x: number; y: number; z: number };
+
+	htmlVelX: HTMLElement | undefined;
+	htmlVelY: HTMLElement | undefined;
+	htmlVelZ: HTMLElement | undefined;
+	htmlPace: HTMLElement | undefined;
 
 	constructor() {
 		this.isStopped = true;
-		this.initialBallPosition = [-0.7, 1.72, 10.06 - 1.32];
-		this.velocity = { x: 0, y: 0, z: 0}
-		
+
+		this.velocity = { x: 0, y: 0, z: 0 };
+		// this.acceleration = { x: 0, y: 0, z: 0 };
 	}
 
-	reinitializeAnim(vKph: number, vAngle: number, hAngle: number) {
+	reinitializeAnim(
+		speedKph: number,
+		verticalAngle: number,
+		horizAngle: number,
+		initialBallPosition = [-0.7, 1.72, 10.06 - 1.32],
+	) {
 		// at release
 		// wrt bowler
-		this.velKph = vKph;
-		this.verticalAngle = vAngle;
-		this.horizAngle = hAngle;
+		this.speedKph = speedKph;
+		this.verticalAngle = verticalAngle;
+		this.horizAngle = horizAngle;
 
-		const velMps = this.velKph / 3.6;
+		const speedMps = this.speedKph / 3.6;
 
 		const Vx =
-			velMps *
+			speedMps *
 			Math.cos(degToRad(this.horizAngle)) *
 			Math.cos(degToRad(this.verticalAngle));
-		const Vy = velMps * Math.sin(degToRad(this.verticalAngle));
+
+		const Vy = speedMps * Math.sin(degToRad(this.verticalAngle));
 		const Vz =
-			velMps *
+			speedMps *
 			Math.cos(degToRad(this.verticalAngle)) *
 			Math.sin(degToRad(this.horizAngle));
 
@@ -57,9 +68,9 @@ class GameConditions {
 		this.dragFactor = (0.5 * airDensity * dragCoeff * crossSecArea) / mass;
 
 		if (this.ballRef) {
-			this.ballRef.position.x = this.initialBallPosition[0];
-			this.ballRef.position.y = this.initialBallPosition[1];
-			this.ballRef.position.z = this.initialBallPosition[2];
+			this.ballRef.position.x = initialBallPosition[0];
+			this.ballRef.position.y = initialBallPosition[1];
+			this.ballRef.position.z = initialBallPosition[2];
 		}
 
 		this.timeElapsed = 0;
@@ -67,7 +78,31 @@ class GameConditions {
 
 		this.coefficientOfRestitution = 0.5; // more = more bounce preserved
 		this.coefficientOfFriction = 0.3; // less = more energy velocity preserved
+
+		this.updateHtmlOverlay(0, 0, 0, 0);
+	}
+
+	endAnim() {
+		this.isStopped = true;
+		this.timeElapsed = 0;
+
+		this.velocity = { x: 0, y: 0, z: 0 };
+		// this.acceleration = { x: 0, y: this.gravityAcc, z: 0 };
+
+		this.updateHtmlOverlay(0, 0, 0, 0);
+	}
+
+	updateHtmlOverlay(vx: number, vy: number, vz: number, pace: number) {
+		if (this.htmlVelX && this.htmlVelY && this.htmlVelZ && this.htmlPace) {
+			this.htmlVelX.innerText = mpsToKph(vx).toFixed(2);
+			this.htmlVelY.innerText = mpsToKph(vy).toFixed(2);
+			this.htmlVelZ.innerText = mpsToKph(vz).toFixed(2);
+			this.htmlPace.innerText = mpsToKph(pace).toFixed(2);
+		}
 	}
 }
 
+function mpsToKph(v: number) {
+	return v * 3.6;
+}
 export const gameConditions = new GameConditions();
