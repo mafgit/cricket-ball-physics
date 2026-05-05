@@ -31,11 +31,11 @@ class GameConditions {
 	horizAngle!: number;
 	dragFactor!: number;
 	gravityAcc!: number;
-	velocity!: { x: number; y: number; z: number };
+	velocity!: Vector3;
 	ballRef?: Group;
 	coefficientOfRestitution!: number;
 	coefficientOfFriction!: number;
-	angularVelocity!: { x: number; y: number; z: number };
+	angularVelocity!: Vector3;
 	magnusStrength!: number;
 	angularDecay!: number;
 	runupDuration!: number;
@@ -45,6 +45,9 @@ class GameConditions {
 	htmlPace: HTMLElement | undefined;
 	initialBallPosition!: number[];
 	orientationTheta!: Quaternion;
+	ballMass!: number;
+	ballRadius!: number;
+	momentOfInertia!: number;
 
 	constructor() {
 		this.clearAnim();
@@ -65,6 +68,10 @@ class GameConditions {
 		seamAngle: number[];
 		initialBallPosition: number[];
 	}) {
+		this.ballRadius = 0.036;
+		this.ballMass = 0.156;
+		this.momentOfInertia = (2 * this.ballMass * this.ballRadius ** 2) / 5;
+
 		// at release
 		// wrt bowler
 		this.speedKph = speedKph;
@@ -80,28 +87,25 @@ class GameConditions {
 		const Vx =
 			speedMps * Math.cos(this.verticalAngle) * Math.sin(this.horizAngle);
 
-		this.velocity = {
-			x: Vx,
-			y: Vy,
-			z: Vz,
-		};
+		this.velocity = new Vector3(Vx, Vy, Vz);
 
-		this.angularVelocity = {
-			x: angularVelocity[0],
-			y: angularVelocity[1],
-			z: angularVelocity[2],
-		};
+		this.angularVelocity = new Vector3(
+			angularVelocity[0],
+			angularVelocity[1],
+			angularVelocity[2],
+		);
 
 		// air
 		const airDensity = 1.255; // kg/m^3
 		const dragCoeff = 0.45; // for sphere
-		const mass = 0.156;
 		const crossSecArea = 0.0042; // for cricket ball approx
-		this.dragFactor = (0.5 * airDensity * dragCoeff * crossSecArea) / mass;
+		this.dragFactor =
+			(0.5 * airDensity * dragCoeff * crossSecArea) / this.ballMass;
 
 		const magnusCoefficient = 0.2;
 		this.magnusStrength =
-			(0.5 * magnusCoefficient * airDensity * crossSecArea) / mass;
+			(0.5 * magnusCoefficient * airDensity * crossSecArea) /
+			this.ballMass;
 
 		if (this.ballRef) {
 			this.ballRef.position.set(
@@ -129,29 +133,32 @@ class GameConditions {
 		this.coefficientOfRestitution = hardPitch.cor; // more = more bounce preserved
 		this.coefficientOfFriction = hardPitch.cof; // less = more energy velocity preserved
 
-		this.updateHtmlOverlay(0, 0, 0);
+		this.updateHtmlOverlay(0, 0, 0, 0);
 	}
 
 	clearAnim() {
+		this.ballRadius = 0.036;
+		this.ballMass = 0.156;
+
 		this.isStopped = true;
 		this.timeElapsed = 0;
 
 		this.gravityAcc = -9.807;
 
-		this.velocity = { x: 0, y: 0, z: 0 };
-		this.angularVelocity = { x: 0, y: 0, z: 0 };
+		this.velocity = new Vector3(0, 0, 0);
+		this.angularVelocity = new Vector3(0, 0, 0);
 
 		this.angularDecay = 0.985;
 
-		this.updateHtmlOverlay(0, 0, 0);
+		this.updateHtmlOverlay(0, 0, 0, 0);
 	}
 
-	updateHtmlOverlay(vx: number, vy: number, vz: number) {
+	updateHtmlOverlay(vx: number, vy: number, vz: number, pace: number) {
 		if (this.htmlVelX && this.htmlVelY && this.htmlVelZ && this.htmlPace) {
 			this.htmlVelX.innerText = mpsToKph(vx).toFixed(2);
 			this.htmlVelY.innerText = mpsToKph(vy).toFixed(2);
 			this.htmlVelZ.innerText = mpsToKph(vz).toFixed(2);
-			this.htmlPace.innerText = mpsToKph(Math.sqrt(vx**2+vy**2+vz**2)).toFixed(2);
+			this.htmlPace.innerText = mpsToKph(pace).toFixed(2);
 		}
 	}
 }

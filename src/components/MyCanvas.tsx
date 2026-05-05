@@ -18,7 +18,7 @@ import Loader from "./Loader";
 // import { useControls } from "leva";
 
 const fastParams = {
-	speedKph: 142,
+	speedKph: 130,
 	verticalAngle: -0.14,
 	horizAngle: 0.03,
 	angularVelocity: [30, 0, 15],
@@ -29,7 +29,7 @@ const spinParams = {
 	speedKph: 83,
 	verticalAngle: 0.01,
 	horizAngle: 0,
-	angularVelocity: [0*-30,0,200],
+	angularVelocity: [-30,0,-200],
 	// angularVelocity: [-10, 0, -20],
 	seamAngle: [0, Math.PI/2 + 0.5, 0],
 };
@@ -44,7 +44,7 @@ const restartAnimListener = (e: KeyboardEvent) => {
 	}
 };
 
-const bowlerPosition = [-0.35, 1.72, 10.06 - 1];
+const bowlerPosition = [-0.6, 1.72, 10.06 - 1];
 const batterPosition = [0.095, 1.72, -10.06 + 1.32];
 
 export default function MyCanvas() {
@@ -73,7 +73,7 @@ export default function MyCanvas() {
 			tabIndex={0}
 			className="bg-[#9bc3ff] w-screen h-screen"
 			camera={{
-				position: batterPosition as any,
+				position: bowlerPosition as any,
 				fov: 65,
 				near: 0.1,
 				far: 1000,
