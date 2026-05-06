@@ -29,12 +29,12 @@ const fastParams = {
 };
 
 const spinParams = {
-	speedKph: 85,
-	verticalAngle: (3 * Math.PI) / 180,
+	speedKph: 82,
+	verticalAngle: (2 * Math.PI) / 180,
 	horizAngle: 0.02,
-	angularVelocity: [-15, 0, -35],
+	angularVelocity: [-45, 0, -70],
 	// angularVelocity: [0, 0, 0],
-	seamAngle: [0, Math.PI / 2 + 0.3, 0],
+	seamAngle: [0, Math.PI / 2 + 0.5, 0],
 };
 
 const playerHeight = 1.8;
