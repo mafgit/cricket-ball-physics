@@ -1,66 +1,82 @@
 import { Euler, type Group, Quaternion, Vector3 } from "three";
-
-const hardPitch = {
-	cor: 0.6,
-	cof: 0.4,
-	corr: 0.012
-};
-
-const grassyPitch = {
-	cor: 0.51,
-	cof: 0.3,
-	corr: 0.025
-};
-
-const dryDustyPitch = {
-	cor: 0.44,
-	cof: 0.63,
-	corr: 0.032
-	
-};
-
-const softPitch = {
-	cor: 0.35,
-	cof: 0.25,
-	corr: 0.042
-};
-
-const outfield = {
-	cof: 0.45,
-	cor: 0.2,
-	corr: 0.08,
-};
+import {
+	outfield,
+	hardPitch,
+	dryDustyPitch,
+	grassyPitch,
+	softPitch,
+} from "./groundProperties";
+import { type RefObject } from "react";
 
 /**
  * **angularVelocity**: to understand it, stick a rod along the ball and think of rotating it around that rod. The rod is the axis that we must set w[axis] high to.
  */
-class GameConditions {
+export default class GameConditions {
+	// air
+	airDensity = 1.225;
+	dragCoeff = 0.45;
+	magnusCoeff = 0.1;
+	dragFactor: number;
+	gravityAcc = -9.807;
+	magnusStrength: number;
+	momentOfInertia: number;
+	swingCoeff = 0.00009;
+	angularDecayPerSec = 0.985;
+
+	// ball
+	ballRadius = 0.0355;
+	ballMass = 0.156;
+	crossSecArea: number;
+	ballRef: RefObject<Group|null>;
+
+	// input related
 	speedKph!: number;
-	isStopped!: boolean;
-	timeElapsed!: number;
 	verticalAngle!: number;
 	horizAngle!: number;
-	dragFactor!: number;
-	gravityAcc!: number;
-	velocity!: Vector3;
-	ballRef?: Group;
+	ballReleasePos!: number[];
 	angularVelocity!: Vector3;
-	magnusStrength!: number;
-	angularDecay!: number;
-	runupDuration!: number;
+	velocity!: Vector3;
+	orientationTheta!: Quaternion;
+
+	// anim state
+	isStopped = false;
+	timeElapsed = 0;
+	runupDuration = 2;
+
+	// overlay
 	htmlVelX: HTMLElement | undefined;
 	htmlVelY: HTMLElement | undefined;
 	htmlVelZ: HTMLElement | undefined;
 	htmlPace: HTMLElement | undefined;
-	initialBallPosition!: number[];
-	orientationTheta!: Quaternion;
-	ballMass!: number;
-	ballRadius!: number;
-	momentOfInertia!: number;
-	pitch: any;
-	outfield: any; // todo: data types
 
-	constructor() {
+	// ground
+	pitch = hardPitch;
+	outfield = outfield;
+
+	constructor(ballRef: RefObject<Group|null>) {
+		this.ballRef = ballRef;
+
+		this.crossSecArea = Math.PI * this.ballRadius ** 2; // for cricket ball approx
+
+		this.momentOfInertia = (2 * this.ballMass * this.ballRadius ** 2) / 5;
+
+		this.dragFactor =
+			(this.airDensity * this.dragCoeff * this.crossSecArea) /
+			(2 * this.ballMass);
+
+		// magnus
+		this.magnusStrength =
+			(this.magnusCoeff * this.airDensity * this.crossSecArea) /
+			(2 * this.ballMass);
+
+		// swing
+
+		// spin
+
+		// ground
+		this.outfield = outfield;
+		this.pitch = hardPitch;
+
 		this.clearAnim();
 	}
 
@@ -70,19 +86,15 @@ class GameConditions {
 		horizAngle,
 		angularVelocity,
 		seamAngle,
-		initialBallPosition,
+		ballReleasePos,
 	}: {
 		speedKph: number;
 		verticalAngle: number;
 		horizAngle: number;
 		angularVelocity: number[];
 		seamAngle: number[];
-		initialBallPosition: number[];
+		ballReleasePos: number[];
 	}) {
-		this.ballRadius = 0.0355;
-		this.ballMass = 0.156;
-		this.momentOfInertia = (2 * this.ballMass * this.ballRadius ** 2) / 5;
-
 		// at release
 		// wrt bowler
 		this.speedKph = speedKph;
@@ -106,23 +118,11 @@ class GameConditions {
 			angularVelocity[2],
 		);
 
-		// air
-		const airDensity = 1.255; // kg/m^3
-		const dragCoeff = 0.45; // for sphere
-		const crossSecArea = Math.PI * this.ballRadius ** 2; // for cricket ball approx
-		this.dragFactor =
-			(0.5 * airDensity * dragCoeff * crossSecArea) / this.ballMass;
-
-		const magnusCoefficient = 0.2;
-		this.magnusStrength =
-			(0.5 * magnusCoefficient * airDensity * crossSecArea) /
-			this.ballMass;
-
-		if (this.ballRef) {
-			this.ballRef.position.set(
-				initialBallPosition[0],
-				initialBallPosition[1],
-				initialBallPosition[2],
+		if (this.ballRef.current) {
+			this.ballRef.current.position.set(
+				ballReleasePos[0],
+				ballReleasePos[1],
+				ballReleasePos[2],
 			);
 
 			const euler = new Euler(
@@ -133,33 +133,26 @@ class GameConditions {
 			);
 
 			this.orientationTheta = new Quaternion().setFromEuler(euler);
-			this.ballRef.rotation.setFromQuaternion(this.orientationTheta);
+			this.ballRef.current.rotation.setFromQuaternion(
+				this.orientationTheta,
+			);
 		}
+
+		// this.swingCoeff = 0..
 
 		this.timeElapsed = 0;
 		this.isStopped = false;
-		this.runupDuration = 2; // seconds
-		this.initialBallPosition = initialBallPosition;
-
-		this.outfield = outfield;
-		this.pitch = hardPitch;
+		this.ballReleasePos = ballReleasePos;
 
 		this.updateHtmlOverlay(0, 0, 0, 0);
 	}
 
 	clearAnim() {
-		this.ballRadius = 0.036;
-		this.ballMass = 0.156;
-
 		this.isStopped = true;
 		this.timeElapsed = 0;
 
-		this.gravityAcc = -9.807;
-
 		this.velocity = new Vector3(0, 0, 0);
 		this.angularVelocity = new Vector3(0, 0, 0);
-
-		this.angularDecay = 0.985;
 
 		this.updateHtmlOverlay(0, 0, 0, 0);
 	}
@@ -173,8 +166,3 @@ class GameConditions {
 		}
 	}
 }
-
-function mpsToKph(v: number) {
-	return v * 3.6;
-}
-export const gameConditions = new GameConditions();

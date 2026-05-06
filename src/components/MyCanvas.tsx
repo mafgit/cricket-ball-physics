@@ -11,72 +11,21 @@ import {
 } from "@react-three/drei";
 import Ball from "./Ball";
 import Ground from "./Ground";
-import Player from "./Player";
-import { gameConditions } from "@/GameConditions";
-import { Suspense, useEffect, useRef } from "react";
+import { Suspense, useRef } from "react";
 import Loader from "./Loader";
 import Batsman from "./Batsman";
 import Bowler from "./Bowler";
+import {
+	batsmanPos,
+	bentHeight,
+	bowlerPos,
+	playerHeight,
+	sunPos,
+} from "@/core/positions";
 // import { useControls } from "leva";
-
-const fastParams = {
-	speedKph: 142,
-	verticalAngle: -0.3,
-	horizAngle: 0.03,
-	angularVelocity: [15, 0, 15],
-	// [+backspin, --, +left] (inswing)
-	seamAngle: [0, -0.4, 0],
-};
-
-const spinParams = {
-	speedKph: 82,
-	verticalAngle: (2 * Math.PI) / 180,
-	horizAngle: 0.02,
-	angularVelocity: [-45, 0, -70],
-	// angularVelocity: [0, 0, 0],
-	seamAngle: [0, Math.PI / 2 + 0.5, 0],
-};
-
-const playerHeight = 1.8;
-const bentHeight = playerHeight - 0.1;
-const bowlerReleaseHeight = playerHeight + 0.3;
-
-const batsmanPos = [0.095, bentHeight / 2, -10.06 + 1.32];
-const batsmanCameraPos = [0.095, bentHeight, -10.06 + 1.32];
-
-const bowlerCameraPos = [-0.75, playerHeight, 10.06 - 1.2];
-const bowlerPos = [-0.75, playerHeight / 2, 10.06 - 1.2];
-const ballReleasePos = [-0.45, bowlerReleaseHeight, 10.06 - 1.32];
-
-const sunPos = [-20, 40, 20];
-const restartAnimListener = (e: KeyboardEvent) => {
-	if (e.key.toLowerCase() === "r") {
-		gameConditions.startAnim({
-			...spinParams,
-			initialBallPosition: ballReleasePos,
-		});
-	}
-};
 
 export default function MyCanvas() {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
-	// const { gravityAcc } = useControls({
-	// 	gravityAcc: {
-	// 		min: -40,
-	// 		max: 30,
-	// 		value: -9.807,
-	// 		step: -9.807 / 4,
-	// 	},
-	// });
-
-	useEffect(() => {
-		document.addEventListener("keyup", restartAnimListener);
-		// if (canvasRef.current) {
-		// 	canvasRef.current.focus();
-		// }
-
-		return () => document.removeEventListener("keyup", restartAnimListener);
-	}, []);
 
 	return (
 		<Canvas
@@ -103,7 +52,13 @@ export default function MyCanvas() {
 			{/* <Player /> */}
 
 			{/* environment */}
-			{/* <Environment preset="park" /> */}
+			{(() => {
+				try {
+					return <Environment preset="park" />;
+				} catch {
+					return <></>;
+				}
+			})()}
 			<Sky sunPosition={sunPos as any} />
 
 			{/* light */}
