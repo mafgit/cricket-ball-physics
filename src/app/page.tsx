@@ -5,7 +5,7 @@ export default function Home() {
 		<>
 			<p className="hint">Play/Replay (R)</p>
 			<div id="velocity">
-				<p className="font-bold">POV: Batsman</p>
+				<p className="font-bold">POV: Bowler</p>
 				<div>
 					<p>👉 +x</p>
 					<p id="x">0</p>
@@ -22,7 +22,7 @@ export default function Home() {
 
 				<div>
 					<p>Pace</p>
-					<p className="w-full"><span id="p">0</span> <span className="ml-auto">KPH</span></p>
+					<p className="w-full"><span id="p">0</span> <span className="ml-auto">MPS</span></p>
 				</div>
 			</div>
 			

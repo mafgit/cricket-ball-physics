@@ -5,7 +5,7 @@ import TexturedPitchMaterial from "./TexturedPitchMaterial";
 
 export default function Pitch({ textured = true }) {
 	return (
-		<group position={[0, 0.001, 0]}>
+		<group position={[0, 0, 0]}>
 			<mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
 				<planeGeometry
 					args={[3.66, 22.56, 10, 100]}
@@ -19,7 +19,12 @@ export default function Pitch({ textured = true }) {
 				{textured ? (
 					<TexturedPitchMaterial />
 				) : (
-					<meshStandardMaterial color="#D2B48C" />
+					<meshStandardMaterial
+						color="#D2B48C"
+						polygonOffset
+						polygonOffsetFactor={-1}
+						polygonOffsetUnits={-1}
+					/>
 				)}
 			</mesh>
 

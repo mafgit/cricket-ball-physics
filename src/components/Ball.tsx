@@ -19,7 +19,16 @@ export default function Ball() {
 	}, []);
 
 	useFrame((state, deltaSec) => {
-		if (gameConditions.isStopped || !gameConditions.ballRef) return;
+		if (!gameConditions.ballRef) return;
+
+		state.camera.position.set(
+			gameConditions.ballRef.position.x,
+			gameConditions.ballRef.position.y + 0.5,
+			gameConditions.ballRef.position.z + 0.9,
+		);
+		state.camera.lookAt(gameConditions.ballRef.position);
+
+		if (gameConditions.isStopped) return;
 
 		// 2 sec delay when anim starts
 		if (gameConditions.timeElapsed < gameConditions.runupDuration) {
@@ -36,7 +45,12 @@ export default function Ball() {
 		const v = gameConditions.velocity;
 		const w = gameConditions.angularVelocity;
 
-		const a = new Vector3(0, gameConditions.gravityAcc, 0);
+		let normalAcc = 0; // if at ground, gravity cancels out
+		// if (p.y <= gameConditions.ballRadius + 0.005 && v.y < 0) {
+		// 	normalAcc = -gameConditions.gravityAcc;
+		// }
+
+		const a = new Vector3(0, gameConditions.gravityAcc - normalAcc, 0);
 		// on each frame, no accumulation of accelerations
 
 		// -------- updating accelerations/forces --------
@@ -51,14 +65,15 @@ export default function Ball() {
 		}
 
 		// magnus effect (swing in air DUE TO SPIN/ROTATION, perpendicular to angular velocity and velocity, like free kick swing)
-		const crossProd = new Vector3().crossVectors(w, v);
-		a.x += gameConditions.magnusStrength * crossProd.x;
-		a.y += gameConditions.magnusStrength * crossProd.y;
-		a.z += gameConditions.magnusStrength * crossProd.z;
+		// const crossProd = new Vector3().crossVectors(w, v);
+		// a.x += gameConditions.magnusStrength * crossProd.x;
+		// a.y += gameConditions.magnusStrength * crossProd.y;
+		// a.z += gameConditions.magnusStrength * crossProd.z;
 
-		// wx *= Math.pow(gameConditions.angularDecay, deltaSec);
-		// wy *= Math.pow(gameConditions.angularDecay, deltaSec);
-		// wz *= Math.pow(gameConditions.angularDecay, deltaSec);
+		// angular decay
+		// w.x *= Math.pow(gameConditions.angularDecay, deltaSec);
+		// w.y *= Math.pow(gameConditions.angularDecay, deltaSec);
+		// w.z *= Math.pow(gameConditions.angularDecay, deltaSec);
 
 		// -------- updating velocities --------
 		v.x += a.x * deltaSec;
@@ -72,11 +87,12 @@ export default function Ball() {
 
 		// -------- updating rotations --------
 		const deltaTheta = new Quaternion();
-		const angularMag = w.length();
+		const angularAxis = new Vector3().copy(w);
+		const angularMag = angularAxis.length();
 
 		if (angularMag > 1e-5) {
-			w.normalize(); // get angular axis's directions
-			deltaTheta.setFromAxisAngle(w, angularMag * deltaSec);
+			angularAxis.normalize(); // get angular axis's directions
+			deltaTheta.setFromAxisAngle(angularAxis, angularMag * deltaSec);
 			gameConditions.orientationTheta.multiplyQuaternions(
 				deltaTheta,
 				gameConditions.orientationTheta,
@@ -88,54 +104,133 @@ export default function Ball() {
 		}
 
 		// -------- on contact with ground --------
+		const isTouchingGround = p.y <= gameConditions.ballRadius + 0.005;
+
 		const {
 			ballRadius: r,
 			ballMass: m,
-			coefficientOfFriction: cof,
-			coefficientOfRestitution: cor,
 			momentOfInertia: I,
 		} = gameConditions;
 
-		if (p.y <= r && v.y < 0) {
+		if (isTouchingGround) {
+			let cof = 0,
+				cor = 0,
+				corr = 0;
+			const onOutfield = Math.abs(p.z) > 11.28 || Math.abs(p.x) > 1.83;
+
+			if (onOutfield) {
+				({ cof, cor, corr } = gameConditions.outfield);
+			} else {
+				({ cof, cor, corr } = gameConditions.pitch);
+			}
+
 			p.y = r; // fix if below pitch
 
-			const contactPoint = new Vector3(0, -r, 0); // contact point
-			const vContact = new Vector3();
-			vContact.copy(v).add(vContact.crossVectors(w, contactPoint));
+			const isBouncing = v.y < -0.3;
 
-			const verticalImpulse = -m * (1 + cor) * v.y;
-			v.y += verticalImpulse / m;
-
-			const slipXZ = new Vector2(v.x + w.z * r, v.z - w.x * r);
+			const slipXZ = new Vector2(v.x - w.z * r, v.z + w.x * r);
 			const slipMag = slipXZ.length();
-			let tangentialImpulse = (2 / 7) * m * slipMag;
-			tangentialImpulse = Math.min(
-				tangentialImpulse,
-				cof * verticalImpulse,
-			);
 
-			const horizontalImpulse =
-				(-tangentialImpulse * slipXZ.getComponent(0)) / slipMag;
-			const zImpulse =
-				(-tangentialImpulse * slipXZ.getComponent(1)) / slipMag;
+			if (isBouncing) {
+				console.log("Bouncing");
 
-			v.x += horizontalImpulse / m;
-			v.z += zImpulse / m;
+				const verticalImpulse = m * (1 + cor) * Math.abs(v.y);
+				v.y += verticalImpulse / m;
+				if (slipMag > 1e-5) {
+					let tangentialImpulse = (2 / 7) * m * slipMag;
+					tangentialImpulse = Math.min(
+						tangentialImpulse,
+						cof * verticalImpulse,
+					);
+					const horizontalImpulse =
+						(-tangentialImpulse * slipXZ.getComponent(0)) / slipMag;
+					const zImpulse =
+						(-tangentialImpulse * slipXZ.getComponent(1)) / slipMag;
 
-			w.x -= (r * zImpulse) / I;
-			w.z += (r * horizontalImpulse) / I;
+					v.x += horizontalImpulse / m;
+					v.z += zImpulse / m;
+					w.x -= (r * zImpulse) / I;
+					w.z += (r * horizontalImpulse) / I;
+				}
+			} else if (slipMag > 0.05) {
+				console.log("Sliding");
+				v.y = 0;
+
+				if (slipMag > 1e-5) {
+					const slipNormalized = slipXZ.clone().normalize();
+					const frictionDecel =
+						cof * Math.abs(gameConditions.gravityAcc);
+					const speedDecrease = frictionDecel * deltaSec;
+
+					if (slipMag > speedDecrease) {
+						const ax =
+							-frictionDecel * slipNormalized.getComponent(0);
+						const az =
+							-frictionDecel * slipNormalized.getComponent(1);
+
+						v.x += ax * deltaSec;
+						v.z += az * deltaSec;
+
+						const torqueX = -r * (m * az);
+						const torqueZ = r * (m * ax);
+						w.x += (torqueX / I) * deltaSec;
+						w.z += (torqueZ / I) * deltaSec;
+					} else {
+						v.set(0, 0, 0);
+						w.set(0, 0, 0);
+					}
+				} else {
+					v.set(0, 0, 0);
+					w.set(0, 0, 0);
+				}
+			} else {
+				console.log("Rolling");
+				// rolling
+				v.y = 0;
+				const vMag = v.length();
+				// rolling acceleration
+				if (vMag > 1e-5) {
+					const vNormalized = v.clone().normalize();
+
+					// const rollingAcc = vNormalized
+					// 	.clone()
+					// 	.multiplyScalar(corr * gameConditions.gravityAcc);
+					const rollingDecel =
+						corr * Math.abs(gameConditions.gravityAcc);
+					const speedDecrease = rollingDecel * deltaSec;
+
+					// to not decrease so much that it flips
+					if (vMag > speedDecrease) {
+						v.x -= vNormalized.x * speedDecrease;
+						v.z -= vNormalized.z * speedDecrease;
+
+						w.x = -v.z / r;
+						w.y = 0;
+						w.z = v.x / r;
+					} else {
+						// stop completely
+						v.set(0, 0, 0);
+						w.set(0, 0, 0);
+					}
+				} else {
+					// stop completely
+					v.set(0, 0, 0);
+					w.set(0, 0, 0);
+				}
+			}
 		}
 
-		// updating overlay for speed visuals (opposite signs to adjust for batsman POV)
+		// ----- overlay -----
 		const vMagUpdated = v.length();
-		gameConditions.updateHtmlOverlay(-v.x, v.y, -v.z, vMagUpdated);
+		gameConditions.updateHtmlOverlay(v.x, v.y, v.z, vMagUpdated);
 
 		// stop anim
 		if (
-			vMagUpdated < 0.1
+			vMagUpdated < 0.02
 			// || gameConditions.ballRef.position.z <= -50
 		) {
 			gameConditions.clearAnim();
+			console.log(gameConditions.ballRef.position.z);
 		}
 	});
 

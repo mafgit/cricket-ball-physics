@@ -22,6 +22,9 @@ export default function TexturedPitchMaterial() {
 	return (
 		<meshStandardMaterial
 			{...texture}
+			polygonOffset
+			polygonOffsetFactor={-1}
+			polygonOffsetUnits={-1}
 		/>
 	);
 }

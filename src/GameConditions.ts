@@ -3,21 +3,32 @@ import { Euler, type Group, Quaternion, Vector3 } from "three";
 const hardPitch = {
 	cor: 0.6,
 	cof: 0.4,
+	corr: 0.012
 };
 
 const grassyPitch = {
 	cor: 0.51,
 	cof: 0.3,
+	corr: 0.025
 };
 
 const dryDustyPitch = {
 	cor: 0.44,
 	cof: 0.63,
+	corr: 0.032
+	
 };
 
 const softPitch = {
 	cor: 0.35,
 	cof: 0.25,
+	corr: 0.042
+};
+
+const outfield = {
+	cof: 0.45,
+	cor: 0.2,
+	corr: 0.08,
 };
 
 /**
@@ -33,8 +44,6 @@ class GameConditions {
 	gravityAcc!: number;
 	velocity!: Vector3;
 	ballRef?: Group;
-	coefficientOfRestitution!: number;
-	coefficientOfFriction!: number;
 	angularVelocity!: Vector3;
 	magnusStrength!: number;
 	angularDecay!: number;
@@ -48,6 +57,8 @@ class GameConditions {
 	ballMass!: number;
 	ballRadius!: number;
 	momentOfInertia!: number;
+	pitch: any;
+	outfield: any; // todo: data types
 
 	constructor() {
 		this.clearAnim();
@@ -68,7 +79,7 @@ class GameConditions {
 		seamAngle: number[];
 		initialBallPosition: number[];
 	}) {
-		this.ballRadius = 0.036;
+		this.ballRadius = 0.0355;
 		this.ballMass = 0.156;
 		this.momentOfInertia = (2 * this.ballMass * this.ballRadius ** 2) / 5;
 
@@ -98,7 +109,7 @@ class GameConditions {
 		// air
 		const airDensity = 1.255; // kg/m^3
 		const dragCoeff = 0.45; // for sphere
-		const crossSecArea = 0.0042; // for cricket ball approx
+		const crossSecArea = Math.PI * this.ballRadius ** 2; // for cricket ball approx
 		this.dragFactor =
 			(0.5 * airDensity * dragCoeff * crossSecArea) / this.ballMass;
 
@@ -130,8 +141,8 @@ class GameConditions {
 		this.runupDuration = 2; // seconds
 		this.initialBallPosition = initialBallPosition;
 
-		this.coefficientOfRestitution = hardPitch.cor; // more = more bounce preserved
-		this.coefficientOfFriction = hardPitch.cof; // less = more energy velocity preserved
+		this.outfield = outfield;
+		this.pitch = hardPitch;
 
 		this.updateHtmlOverlay(0, 0, 0, 0);
 	}
@@ -155,10 +166,10 @@ class GameConditions {
 
 	updateHtmlOverlay(vx: number, vy: number, vz: number, pace: number) {
 		if (this.htmlVelX && this.htmlVelY && this.htmlVelZ && this.htmlPace) {
-			this.htmlVelX.innerText = mpsToKph(vx).toFixed(2);
-			this.htmlVelY.innerText = mpsToKph(vy).toFixed(2);
-			this.htmlVelZ.innerText = mpsToKph(vz).toFixed(2);
-			this.htmlPace.innerText = mpsToKph(pace).toFixed(2);
+			this.htmlVelX.innerText = vx.toFixed(2);
+			this.htmlVelY.innerText = vy.toFixed(2);
+			this.htmlVelZ.innerText = vz.toFixed(2);
+			this.htmlPace.innerText = pace.toFixed(2);
 		}
 	}
 }
