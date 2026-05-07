@@ -1,4 +1,4 @@
-import { Euler, type Group, Quaternion, Vector3 } from "three";
+import { Euler, type Group, Quaternion, Vector2, Vector3 } from "three";
 import {
 	outfield,
 	hardPitch,
@@ -27,6 +27,7 @@ export default class GameConditions {
 	ballMass = 0.156;
 	crossSecArea: number;
 	ballRef: RefObject<Group | null>;
+	ballPositionState: "HAND" | "FLIGHT" | "BOUNCE" | "SLIDE" | "ROLL" = "HAND";
 
 	// seam
 	seamRef: RefObject<Group | null>;
@@ -106,8 +107,7 @@ export default class GameConditions {
 		seamRoll: number;
 		ballReleasePos: number[];
 	}) {
-		// at release
-		// wrt bowler
+		this.ballPositionState = "HAND";
 		this.speedKph = speedKph;
 		this.verticalAngle = verticalAngle;
 		this.horizAngle = horizAngle;
@@ -172,10 +172,208 @@ export default class GameConditions {
 
 	updateHtmlOverlay(vx: number, vy: number, vz: number, pace: number) {
 		if (this.htmlVelX && this.htmlVelY && this.htmlVelZ && this.htmlPace) {
-			this.htmlVelX.innerText = (vx*3.6).toFixed(2);
-			this.htmlVelY.innerText = (vy*3.6).toFixed(2);
-			this.htmlVelZ.innerText = (vz*3.6).toFixed(2);
-			this.htmlPace.innerText = (pace*3.6).toFixed(2);
+			this.htmlVelX.innerText = (vx * 3.6).toFixed(2);
+			this.htmlVelY.innerText = (vy * 3.6).toFixed(2);
+			this.htmlVelZ.innerText = (vz * 3.6).toFixed(2);
+			this.htmlPace.innerText = (pace * 3.6).toFixed(2);
+		}
+	}
+
+	handleGroundContact(deltaSec: number) {
+		const p = this.ballRef.current!.position;
+		const v = this.velocity;
+		const w = this.angularVelocity;
+
+		const isTouchingGround = p.y <= this.ballRadius + 0.008;
+
+		const { ballRadius: r, ballMass: m, momentOfInertia: I } = this;
+
+		if (isTouchingGround) {
+			let cof = 0,
+				cor = 0,
+				corr = 0;
+			const onOutfield = Math.abs(p.z) > 11.28 || Math.abs(p.x) > 1.83;
+
+			if (onOutfield) {
+				({ cof, cor, corr } = this.outfield);
+			} else {
+				({ cof, cor, corr } = this.pitch);
+			}
+
+			p.y = r; // fix if below pitch
+
+			let slipXZ = new Vector2(v.x - w.z * r, v.z + w.x * r);
+			let slipMag = slipXZ.length();
+
+			if (v.y < -0.01) {
+				console.log("Bouncing");
+
+				const verticalImpulse = m * (1 + cor) * Math.abs(v.y);
+				v.y = -v.y * cor;
+				if (slipMag > 1e-5) {
+					let tangentialImpulse = (2 / 7) * m * slipMag;
+					tangentialImpulse = Math.min(
+						tangentialImpulse,
+						cof * verticalImpulse,
+					);
+					const horizontalImpulse =
+						(-tangentialImpulse * slipXZ.getComponent(0)) / slipMag;
+					const zImpulse =
+						(-tangentialImpulse * slipXZ.getComponent(1)) / slipMag;
+
+					v.x += horizontalImpulse / m;
+					v.z += zImpulse / m;
+					w.x -= (r * zImpulse) / I;
+					w.z += (r * horizontalImpulse) / I;
+				}
+			} else {
+				if (v.y > -0.15 && v.y < 0.3) {
+					v.y = 0;
+					slipXZ = new Vector2(v.x - w.z * r, v.z + w.x * r);
+					slipMag = slipXZ.length();
+
+					if (slipMag > 0.18) {
+						console.log("Sliding");
+
+						if (slipMag > 1e-5) {
+							const slipNormalized = slipXZ.clone().normalize();
+							const frictionDecel =
+								cof * Math.abs(this.gravityAcc);
+							const speedDecrease = frictionDecel * deltaSec;
+
+							if (slipMag > speedDecrease) {
+								const ax =
+									-frictionDecel *
+									slipNormalized.getComponent(0);
+								const az =
+									-frictionDecel *
+									slipNormalized.getComponent(1);
+
+								v.x += ax * deltaSec;
+								v.z += az * deltaSec;
+
+								const torqueX = -r * (m * az);
+								const torqueZ = r * (m * ax);
+								w.x += (torqueX / I) * deltaSec;
+								w.z += (torqueZ / I) * deltaSec;
+							} else {
+								v.set(0, 0, 0);
+								w.set(0, 0, 0);
+							}
+						} else {
+							v.set(0, 0, 0);
+							w.set(0, 0, 0);
+						}
+					} else {
+						console.log("Rolling");
+						// rolling
+						const vMag = v.length();
+						// rolling acceleration
+						if (vMag > 0.08) {
+							const vNormalized = v.clone().normalize();
+
+							// const rollingAcc = vNormalized
+							// 	.clone()
+							// 	.multiplyScalar(corr * gameConditions.current.gravityAcc);
+							const rollingDecel =
+								corr * Math.abs(this.gravityAcc);
+							const speedDecrease = rollingDecel * deltaSec;
+
+							// to not decrease so much that it flips
+							if (vMag > speedDecrease) {
+								v.x -= vNormalized.x * speedDecrease;
+								v.z -= vNormalized.z * speedDecrease;
+							} else {
+								// stop completely
+								v.set(0, 0, 0);
+								w.set(0, 0, 0);
+							}
+						} else {
+							// stop completely
+							v.set(0, 0, 0);
+							w.set(0, 0, 0);
+						}
+					}
+				}
+			}
+		}
+
+		if (!isTouchingGround) {
+			w.multiplyScalar(Math.pow(this.angularDecayPerSec, deltaSec));
+		}
+	}
+
+	handleSwing() {
+		let aSwing = new Vector3(0, 0, 0);
+		if (this.ballRef.current!.position.y <= this.ballRadius) return aSwing;
+
+		const v = this.velocity;
+
+		const seamDir = this.worldSeamAxis
+			.clone()
+			.applyQuaternion(this.ballRef.current!.quaternion)
+			.normalize();
+
+		if (v.lengthSq() > 1) {
+			const airflowDir = v.clone().negate().normalize();
+			const seamOnFlowPlane = seamDir
+				.clone()
+				.sub(airflowDir.multiplyScalar(seamDir.dot(airflowDir)));
+			const seamPlaneMag = seamOnFlowPlane.length();
+
+			if (seamPlaneMag > 1e-5) {
+				const swingDir = seamOnFlowPlane.multiplyScalar(
+					1 / seamPlaneMag,
+				);
+
+				aSwing = swingDir.multiplyScalar(-7);
+			}
+		}
+
+		return aSwing;
+	}
+
+	handleMagnus() {
+		let aMagnus = new Vector3(0, 0, 0);
+		if (this.ballRef.current!.position.y <= this.ballRadius) return aMagnus;
+
+		const vSqMag = this.velocity.lengthSq();
+
+		if (vSqMag > 1e-5) {
+			aMagnus
+				.crossVectors(this.angularVelocity, this.velocity)
+				.multiplyScalar(this.magnusFactor / Math.sqrt(vSqMag));
+		}
+
+		return aMagnus;
+	}
+
+	handleDrag() {
+		const aDrag = new Vector3(0, 0, 0);
+		if (this.ballRef.current!.position.y <= this.ballRadius) return aDrag;
+
+		const vMagnitude = this.velocity.length();
+
+		if (vMagnitude > 1e-5) {
+			aDrag
+				.copy(this.velocity)
+				.multiplyScalar(-this.dragFactor * vMagnitude);
+		}
+
+		return aDrag;
+	}
+
+	updateRotation(deltaSec: number) {
+		const angularAxis = this.angularVelocity.clone();
+		const angularMag = angularAxis.length();
+
+		if (angularMag > 1e-5) {
+			angularAxis.normalize(); // get angular axis's directions
+			const deltaTheta = new Quaternion().setFromAxisAngle(
+				angularAxis,
+				angularMag * deltaSec,
+			);
+			this.ballRef.current!.quaternion.premultiply(deltaTheta);
 		}
 	}
 }
