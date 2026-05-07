@@ -5,7 +5,7 @@ export default function Ground() {
 	return (
 		<group>
 			<Pitch textured={false} />
-			<Grass textured={true} />
+			<Grass textured={false} />
 		</group>
 	);
 }

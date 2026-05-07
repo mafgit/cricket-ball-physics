@@ -18,16 +18,19 @@ export default class GameConditions {
 	magnusCoeff = 0.1;
 	dragFactor: number;
 	gravityAcc = -9.807;
-	magnusStrength: number;
+	magnusFactor: number;
 	momentOfInertia: number;
-	swingCoeff = 0.00009;
 	angularDecayPerSec = 0.985;
 
 	// ball
 	ballRadius = 0.0355;
 	ballMass = 0.156;
 	crossSecArea: number;
-	ballRef: RefObject<Group|null>;
+	ballRef: RefObject<Group | null>;
+
+	// seam
+	seamRef: RefObject<Group | null>;
+	worldSeamAxis = new Vector3(1, 0, 0);
 
 	// input related
 	speedKph!: number;
@@ -36,7 +39,6 @@ export default class GameConditions {
 	ballReleasePos!: number[];
 	angularVelocity!: Vector3;
 	velocity!: Vector3;
-	orientationTheta!: Quaternion;
 
 	// anim state
 	isStopped = false;
@@ -53,8 +55,12 @@ export default class GameConditions {
 	pitch = hardPitch;
 	outfield = outfield;
 
-	constructor(ballRef: RefObject<Group|null>) {
+	constructor(
+		ballRef: RefObject<Group | null>,
+		seamRef: RefObject<Group | null>,
+	) {
 		this.ballRef = ballRef;
+		this.seamRef = seamRef;
 
 		this.crossSecArea = Math.PI * this.ballRadius ** 2; // for cricket ball approx
 
@@ -65,8 +71,11 @@ export default class GameConditions {
 			(2 * this.ballMass);
 
 		// magnus
-		this.magnusStrength =
-			(this.magnusCoeff * this.airDensity * this.crossSecArea) /
+		this.magnusFactor =
+			(this.magnusCoeff *
+				this.airDensity *
+				this.crossSecArea *
+				this.ballRadius) /
 			(2 * this.ballMass);
 
 		// swing
@@ -85,14 +94,16 @@ export default class GameConditions {
 		verticalAngle,
 		horizAngle,
 		angularVelocity,
-		seamAngle,
+		seamYaw,
+		seamRoll,
 		ballReleasePos,
 	}: {
 		speedKph: number;
 		verticalAngle: number;
 		horizAngle: number;
 		angularVelocity: number[];
-		seamAngle: number[];
+		seamYaw: number;
+		seamRoll: number;
 		ballReleasePos: number[];
 	}) {
 		// at release
@@ -125,20 +136,22 @@ export default class GameConditions {
 				ballReleasePos[2],
 			);
 
-			const euler = new Euler(
-				seamAngle[0],
-				seamAngle[1],
-				seamAngle[2],
-				"XYZ",
+			const quaternionYaw = new Quaternion().setFromAxisAngle(
+				new Vector3(0, 1, 0),
+				seamYaw,
+			);
+			const quaternionRoll = new Quaternion().setFromAxisAngle(
+				new Vector3(0, 0, -1),
+				seamRoll,
 			);
 
-			this.orientationTheta = new Quaternion().setFromEuler(euler);
-			this.ballRef.current.rotation.setFromQuaternion(
-				this.orientationTheta,
+			this.ballRef.current.quaternion.copy(
+				new Quaternion().multiplyQuaternions(
+					quaternionYaw,
+					quaternionRoll,
+				),
 			);
 		}
-
-		// this.swingCoeff = 0..
 
 		this.timeElapsed = 0;
 		this.isStopped = false;
@@ -159,10 +172,10 @@ export default class GameConditions {
 
 	updateHtmlOverlay(vx: number, vy: number, vz: number, pace: number) {
 		if (this.htmlVelX && this.htmlVelY && this.htmlVelZ && this.htmlPace) {
-			this.htmlVelX.innerText = vx.toFixed(2);
-			this.htmlVelY.innerText = vy.toFixed(2);
-			this.htmlVelZ.innerText = vz.toFixed(2);
-			this.htmlPace.innerText = pace.toFixed(2);
+			this.htmlVelX.innerText = (vx*3.6).toFixed(2);
+			this.htmlVelY.innerText = (vy*3.6).toFixed(2);
+			this.htmlVelZ.innerText = (vz*3.6).toFixed(2);
+			this.htmlPace.innerText = (pace*3.6).toFixed(2);
 		}
 	}
 }

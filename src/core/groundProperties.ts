@@ -5,25 +5,25 @@ export interface GroundProperties {
 }
 
 export const hardPitch: GroundProperties = {
-	cor: 0.6,
+	cor: 0.7,
 	cof: 0.4,
 	corr: 0.012,
 };
 
 export const grassyPitch: GroundProperties = {
-	cor: 0.51,
+	cor: 0.58,
 	cof: 0.3,
 	corr: 0.025,
 };
 
 export const dryDustyPitch: GroundProperties = {
-	cor: 0.44,
+	cor: 0.49,
 	cof: 0.63,
 	corr: 0.032,
 };
 
 export const softPitch: GroundProperties = {
-	cor: 0.35,
+	cor: 0.45,
 	cof: 0.25,
 	corr: 0.042,
 };

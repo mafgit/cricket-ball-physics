@@ -16,8 +16,10 @@ import Loader from "./Loader";
 import Batsman from "./Batsman";
 import Bowler from "./Bowler";
 import {
+	batsmanCameraPos,
 	batsmanPos,
 	bentHeight,
+	bowlerCameraPos,
 	bowlerPos,
 	playerHeight,
 	sunPos,
@@ -33,7 +35,7 @@ export default function MyCanvas() {
 			tabIndex={0}
 			className="bg-[#9bc3ff] w-screen h-screen"
 			camera={{
-				position: [10, 5, -15] as any,
+				position: [0, 3, -70] as any,
 				fov: 65,
 				near: 0.05,
 				far: 1000,
@@ -46,9 +48,9 @@ export default function MyCanvas() {
 			<Stats className="fps" />
 
 			{/* Controls */}
-			<OrbitControls makeDefault />
+			{/* <OrbitControls makeDefault /> */}
 			{/* <FirstPersonControls movementSpeed={5} /> */}
-			{/* <PointerLockControls pointerSpeed={1.5} /> */}
+			<PointerLockControls pointerSpeed={1.5} />
 			{/* <Player /> */}
 
 			{/* environment */}
