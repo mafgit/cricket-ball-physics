@@ -21,6 +21,7 @@ import {
 	bentHeight,
 	bowlerCameraPos,
 	bowlerPos,
+	farBackCameraPos,
 	playerHeight,
 	sunPos,
 } from "@/core/positions";
@@ -35,7 +36,7 @@ export default function MyCanvas() {
 			tabIndex={0}
 			className="bg-[#9bc3ff] w-screen h-screen"
 			camera={{
-				position: [0, 3, -70] as any,
+				position: farBackCameraPos as any,
 				fov: 65,
 				near: 0.05,
 				far: 1000,

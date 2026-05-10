@@ -3,8 +3,7 @@ import GameConditions from "@/core/GameConditions";
 import { ballReleasePos } from "@/core/positions";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
-import { Quaternion, Vector2, Vector3, type Group } from "three";
-import { degToRad } from "three/src/math/MathUtils.js";
+import { type Group } from "three";
 
 export default function Ball() {
 	const seamThickness = 0.001;
@@ -35,12 +34,12 @@ export default function Ball() {
 	useFrame((state, deltaSec) => {
 		if (!ballRef.current || !seamRef.current) return;
 
-		// state.camera.position.set(
-		// 	ballRef.current.position.x,
-		// 	ballRef.current.position.y + 1,
-		// 	ballRef.current.position.z + 1.7,
-		// );
-		// state.camera.lookAt(ballRef.current.position);
+		state.camera.position.set(
+			ballRef.current.position.x,
+			ballRef.current.position.y + 1,
+			ballRef.current.position.z + 1.7,
+		);
+		state.camera.lookAt(ballRef.current.position);
 
 		if (game.current.isStopped) return;
 
@@ -50,8 +49,10 @@ export default function Ball() {
 			return;
 		}
 
-		if (game.current.ballPositionState === "HAND")
+		if (game.current.ballPositionState === "REST")
 			game.current.ballPositionState = "FLIGHT"; // runup to flight transition
+
+		// game.current.applyAngularDecay(deltaSec);
 
 		// shorthand
 		const p = ballRef.current.position;
@@ -60,11 +61,7 @@ export default function Ball() {
 		// -------- accelerations --------
 		// on each frame... so no accumulation of accelerations
 
-		// gravity
-		const aGrav = new Vector3(0, game.current.gravityAcc, 0);
-
-		// normal
-		const aNormal = new Vector3(0, -game.current.gravityAcc, 0);
+		const aNormal = game.current.getNormalAcc();
 
 		// drag effect (air resistance)
 		const aDrag = game.current.handleDrag();
@@ -76,8 +73,8 @@ export default function Ball() {
 		const aSwing = game.current.handleSwing();
 
 		// ------ summing accelerations ------
-		const a = new Vector3()
-			.copy(aGrav)
+		const a = game.current.aGrav
+			.clone()
 			.add(aNormal)
 			.add(aDrag)
 			.add(aMagnus)
@@ -95,17 +92,16 @@ export default function Ball() {
 		// -------- contact with ground --------
 		game.current.handleGroundContact(deltaSec);
 
+		console.log(game.current.ballPositionState);
+
 		// ----- overlay -----
 		const vMagUpdated = v.length();
 		game.current.updateHtmlOverlay(v.x, v.y, v.z, vMagUpdated);
 
 		// stop anim
-		if (
-			vMagUpdated < 0.08
-			// || ballRef.current.position.z <= -50
-		) {
+		if (vMagUpdated < 0.08 || Math.sqrt(p.x ** 2 + p.z ** 2) >= 200) {
 			game.current.clearAnim();
-			console.log(ballRef.current.position.z);
+			// console.log(ballRef.current.position.z);
 		}
 	});
 
@@ -115,7 +111,7 @@ export default function Ball() {
 			ref={ballRef}
 			castShadow
 			receiveShadow
-			scale={[10, 10, 10]}
+			// scale={[10, 10, 10]}
 		>
 			{/* <axesHelper args={[10]} /> */}
 			<group castShadow receiveShadow>
