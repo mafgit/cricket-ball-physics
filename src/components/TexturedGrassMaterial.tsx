@@ -15,7 +15,7 @@ export default function TexturedGrassMaterial() {
 	// texture repeating
 	maps.forEach((map) => {
 		map.wrapS = map.wrapT = THREE.RepeatWrapping;
-		map.repeat.set(60, 60);
+		map.repeat.set(150, 150);
 	});
 
 	return (
@@ -24,6 +24,6 @@ export default function TexturedGrassMaterial() {
 			aoMap={aoMap}
 			roughnessMap={roughnessMap}
 			normalMap={normalMap}
-		/>
+			/>
 	);
 }
