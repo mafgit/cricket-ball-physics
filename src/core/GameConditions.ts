@@ -7,20 +7,25 @@ import {
 	softPitch,
 } from "./groundProperties";
 import { type RefObject } from "react";
+import { clamp, smoothstep } from "three/src/math/MathUtils.js";
 
 /**
  * **angularVelocity**: to understand it, stick a rod along the ball and think of rotating it around that rod. The rod is the axis that we must set w[axis] high to.
  */
 export default class GameConditions {
 	// air
-	airDensity = 1.225;
-	dragCoeff = 0.45;
-	magnusCoeff = 0.1;
-	dragFactor: number;
+	viscosity = 1.8e-5;
 	gravityAcc = -9.807;
-	magnusFactor: number;
 	momentOfInertia: number;
 	angularDecayPerSec = 0.985;
+
+	maxCoeffLift = 0.55;
+
+	minCoeffDrag = 0.2;
+	maxCoeffDrag = 0.6;
+
+	minAirDensity = 1.15;
+	maxAirDensity = 1.25;
 
 	// ball
 	ballRadius = 0.0355;
@@ -73,18 +78,6 @@ export default class GameConditions {
 
 		this.momentOfInertia = (2 * this.ballMass * this.ballRadius ** 2) / 5;
 
-		this.dragFactor =
-			(this.airDensity * this.dragCoeff * this.crossSecArea) /
-			(2 * this.ballMass);
-
-		// magnus
-		this.magnusFactor =
-			(this.magnusCoeff *
-				this.airDensity *
-				this.crossSecArea *
-				this.ballRadius) /
-			(2 * this.ballMass);
-
 		// swing
 
 		// spin
@@ -98,19 +91,21 @@ export default class GameConditions {
 
 	startAnim({
 		speedKph,
-		verticalAngle,
-		horizAngle,
-		angularVelocity,
-		seamYaw,
-		seamRoll,
+		verticalAngle = 0,
+		horizAngle = 0,
+		backSpin = 0,
+		leftSpin = 0,
+		seamYawLeft = 0,
+		seamRollRight = 0,
 		ballReleasePos,
 	}: {
 		speedKph: number;
-		verticalAngle: number;
-		horizAngle: number;
-		angularVelocity: number[];
-		seamYaw: number;
-		seamRoll: number;
+		verticalAngle?: number;
+		horizAngle?: number;
+		backSpin?: number;
+		leftSpin?: number;
+		seamYawLeft?: number;
+		seamRollRight?: number;
 		ballReleasePos: number[];
 	}) {
 		this.ballPositionState = "REST";
@@ -129,11 +124,7 @@ export default class GameConditions {
 
 		this.velocity = new Vector3(Vx, Vy, Vz);
 
-		this.angularVelocity = new Vector3(
-			angularVelocity[0],
-			angularVelocity[1],
-			angularVelocity[2],
-		);
+		this.angularVelocity = new Vector3(backSpin, 0, leftSpin);
 
 		if (this.ballRef.current) {
 			this.ballRef.current.position.set(
@@ -144,11 +135,11 @@ export default class GameConditions {
 
 			const quaternionYaw = new Quaternion().setFromAxisAngle(
 				new Vector3(0, 1, 0),
-				seamYaw,
+				seamYawLeft,
 			);
 			const quaternionRoll = new Quaternion().setFromAxisAngle(
 				new Vector3(0, 0, -1),
-				seamRoll,
+				seamRollRight,
 			);
 
 			this.ballRef.current.quaternion.copy(
@@ -226,8 +217,6 @@ export default class GameConditions {
 			let slipMag = slipXZ.length();
 
 			if (slipMag > 1e-5) {
-				console.log("Bouncing");
-
 				const normalImpulse = m * (1 + cor) * Math.abs(vyOld);
 				let tangentialImpulse = (2 / 7) * m * slipMag;
 				tangentialImpulse = Math.min(
@@ -352,19 +341,61 @@ export default class GameConditions {
 		return aSwing;
 	}
 
+	getAirDensity() {
+		// 1.15 to 1.25 kg/m3
+		return 1.225;
+	}
+
+	getCoeffLift(w: number, r: number, speed: number) {
+		const k = 0.1; // todo: check. high giving low bounce
+		if (speed < 1e-5) return 0;
+		const spin = (w * r) / speed;
+		return clamp(k * spin, 0, this.maxCoeffLift);
+	}
+
 	handleMagnus() {
 		let aMagnus = new Vector3(0, 0, 0);
-		if (this.ballPositionState != "FLIGHT") return aMagnus;
+		if (
+			this.ballPositionState != "FLIGHT"
+			// || this.ballRef.current!.position.y - this.ballRadius <= 0.2
+		)
+			return aMagnus;
 
-		const vSqMag = this.velocity.lengthSq();
+		const v = this.velocity.length();
+		if (v < 1e-5) return aMagnus;
 
-		if (vSqMag > 1e-5) {
-			aMagnus
-				.crossVectors(this.angularVelocity, this.velocity)
-				.multiplyScalar(this.magnusFactor / Math.sqrt(vSqMag));
-		}
+		const coeffLift = this.getCoeffLift(
+			this.angularVelocity.length(),
+			this.ballRadius,
+			v,
+		);
+
+		console.log(coeffLift);
+
+		const magnusFactor =
+			(coeffLift * this.getAirDensity() * this.crossSecArea) /
+			(2 * this.ballMass);
+
+		aMagnus
+			.crossVectors(this.angularVelocity, this.velocity)
+			.multiplyScalar(magnusFactor);
 
 		return aMagnus;
+	}
+
+	getCoeffDrag(Re: number) {
+		const step = smoothstep(Re, 1e5, 3e5); // 0.0 to 1.0
+		const coeffDrag = 0.55 - step * 0.22; // to put in this range
+		return coeffDrag;
+	}
+
+	getReynoldsNumber(
+		airDensity: number,
+		speed: number,
+		diameter: number,
+		viscosity: number,
+	) {
+		return (airDensity * speed * diameter) / viscosity;
 	}
 
 	handleDrag() {
@@ -373,8 +404,20 @@ export default class GameConditions {
 
 		const vMag = this.velocity.length();
 
+		const p = this.getAirDensity();
+		const Re = this.getReynoldsNumber(
+			p,
+			vMag,
+			this.ballRadius * 2,
+			this.viscosity,
+		);
+
+		const dragFactor =
+			(this.getCoeffDrag(Re) * p * this.crossSecArea) /
+			(2 * this.ballMass);
+
 		if (vMag > 1e-8) {
-			aDrag.copy(this.velocity).multiplyScalar(-this.dragFactor * vMag);
+			aDrag.copy(this.velocity).multiplyScalar(-dragFactor * vMag);
 			// or normalize to v cap, then v cap * vMagSquared
 		}
 

@@ -26,10 +26,10 @@ export default function Crease({
 				color="white"
 				transparent
 				roughness={1}
-				opacity={1}
+				opacity={0.8}
 				polygonOffset
-				polygonOffsetUnits={-1}
-				polygonOffsetFactor={-1}
+				polygonOffsetUnits={-2}
+				polygonOffsetFactor={-2}
 			/>
 		</mesh>
 	);

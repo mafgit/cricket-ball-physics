@@ -36,7 +36,7 @@ export default function MyCanvas() {
 			tabIndex={0}
 			className="bg-[#9bc3ff] w-screen h-screen"
 			camera={{
-				position: batsmanCameraPos as any,
+				position: bowlerCameraPos as any,
 				fov: 65,
 				near: 0.05,
 				far: 1000,
