@@ -36,7 +36,7 @@ export default function MyCanvas() {
 			tabIndex={0}
 			className="bg-[#9bc3ff] w-screen h-screen"
 			camera={{
-				position: bowlerCameraPos as any,
+				position: batsmanCameraPos as any,
 				fov: 65,
 				near: 0.05,
 				far: 1000,
@@ -55,13 +55,13 @@ export default function MyCanvas() {
 			{/* <Player /> */}
 
 			{/* environment */}
-			{(() => {
+			{/* {(() => {
 				try {
 					return <Environment preset="park" />;
 				} catch {
 					return <></>;
 				}
-			})()}
+			})()} */}
 			<Sky sunPosition={sunPos as any} />
 
 			{/* light */}

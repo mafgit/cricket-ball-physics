@@ -3,7 +3,7 @@ import MyCanvas from "@/components/MyCanvas";
 export default function Home() {
 	return (
 		<>
-			<p className="hint">Play/Replay (R)</p>
+			<p className="hint">Replay (R) &nbsp; Pause (P)</p>
 			<div id="velocity">
 				<p className="font-bold">POV: Bowler</p>
 				<div>

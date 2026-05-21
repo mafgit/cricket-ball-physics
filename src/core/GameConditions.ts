@@ -1,4 +1,10 @@
-import { Euler, type Group, Quaternion, Vector2, Vector3 } from "three";
+import {
+	type ArrowHelper,
+	type Group,
+	Quaternion,
+	Vector2,
+	Vector3,
+} from "three";
 import {
 	outfield,
 	hardPitch,
@@ -7,10 +13,13 @@ import {
 	softPitch,
 } from "./groundProperties";
 import { type RefObject } from "react";
-import { clamp, smoothstep } from "three/src/math/MathUtils.js";
+import { clamp, radToDeg, smoothstep } from "three/src/math/MathUtils.js";
+import { Cossette_Texte } from "next/font/google";
 
 /**
  * **angularVelocity**: to understand it, stick a rod along the ball and think of rotating it around that rod. The rod is the axis that we must set w[axis] high to.
+ *
+ * **seamYaw & seamRoll**: the shiny side is always to the right initially, use these to set the desired seam/ball direction.
  */
 export default class GameConditions {
 	// air
@@ -36,7 +45,7 @@ export default class GameConditions {
 
 	// seam
 	seamRef: RefObject<Group | null>;
-	worldSeamAxis = new Vector3(1, 0, 0);
+	seamProminence = 1; // 0-1
 
 	// input related
 	speedKph!: number;
@@ -63,6 +72,83 @@ export default class GameConditions {
 
 	aGrav: Vector3;
 	aNormal: Vector3;
+
+	getReynoldsNumber(
+		airDensity: number,
+		speed: number,
+		diameter: number,
+		viscosity: number,
+	) {
+		return (airDensity * speed * diameter) / viscosity;
+	}
+
+	/**
+	 * 0 - 1 (Peaks at around 20 degrees)
+	 */
+	getSeamAngleEffectiveness(vDir: Vector3) {
+		const localSeamRight = new Vector3(1, 0, 0);
+		const worldSeamPole = localSeamRight
+			.applyQuaternion(this.ballRef.current!.quaternion)
+			.normalize();
+
+		const localSeamUp = new Vector3(0, 1, 0);
+		// cross product gives a vector thats perpendicular to both vectors
+		const idealPole = localSeamUp.clone().cross(vDir).normalize();
+
+		const dotProduct = worldSeamPole.clone().dot(idealPole);
+		const seamAngle = Math.acos(Math.abs(dotProduct));
+
+		const seamAngleDeg = radToDeg(seamAngle);
+		// console.log(seamAngleDeg);
+		const eff = Math.exp(-Math.pow((seamAngleDeg - 21) / 6.5, 2));
+		// console.log(eff);
+
+		return eff;
+	}
+
+	getSwingDirection(vDir: Vector3) {
+		// todo: its very simple, just goes towards rough side
+		const localRoughSide = new Vector3(-1, 0, 0);
+
+		const worldRoughSide = localRoughSide
+			.applyQuaternion(this.ballRef.current!.quaternion)
+			.normalize();
+
+		// two cross products, projected = v x rough then projected x v
+		return vDir.clone().cross(worldRoughSide).cross(vDir);
+	}
+
+	getCoeffSwing(vDir: Vector3) {
+		// todo
+		return this.getSeamAngleEffectiveness(vDir) * this.seamProminence;
+	}
+
+	handleSwing(arrowHelperRef: RefObject<ArrowHelper | null>) {
+		let aSwing = new Vector3(0, 0, 0);
+		if (this.ballPositionState != "FLIGHT") return aSwing;
+		const vMag = this.velocity.length();
+		if (vMag < 13) return aSwing; // vMag too small for swing, and avoid division by zero
+
+		// once calculated here to pass elsewhere
+		const vDir = this.velocity.clone().normalize();
+
+		//
+		const coeffSwing = this.getCoeffSwing(vDir);
+		// const coeffSwing = 0.5;
+		const factor =
+			(coeffSwing *
+				this.getAirDensity() *
+				this.crossSecArea *
+				vMag *
+				vMag) /
+			(2 * this.ballMass); // todo: increase mass if ball gets wet or muddy
+
+		//
+		const swingDir = this.getSwingDirection(vDir);
+		arrowHelperRef.current?.setDirection(swingDir);
+		aSwing = swingDir.clone().multiplyScalar(factor);
+		return aSwing;
+	}
 
 	constructor(
 		ballRef: RefObject<Group | null>,
@@ -96,7 +182,7 @@ export default class GameConditions {
 		backSpin = 0,
 		leftSpin = 0,
 		seamYawLeft = 0,
-		seamRollRight = 0,
+		seamRollLeft = 0,
 		ballReleasePos,
 	}: {
 		speedKph: number;
@@ -105,7 +191,7 @@ export default class GameConditions {
 		backSpin?: number;
 		leftSpin?: number;
 		seamYawLeft?: number;
-		seamRollRight?: number;
+		seamRollLeft?: number;
 		ballReleasePos: number[];
 	}) {
 		this.ballPositionState = "REST";
@@ -138,8 +224,8 @@ export default class GameConditions {
 				seamYawLeft,
 			);
 			const quaternionRoll = new Quaternion().setFromAxisAngle(
-				new Vector3(0, 0, -1),
-				seamRollRight,
+				new Vector3(0, 0, 1),
+				seamRollLeft,
 			);
 
 			this.ballRef.current.quaternion.copy(
@@ -311,39 +397,9 @@ export default class GameConditions {
 		}
 	}
 
-	handleSwing() {
-		let aSwing = new Vector3(0, 0, 0);
-		if (this.ballPositionState != "FLIGHT") return aSwing;
-
-		const v = this.velocity;
-
-		const seamDir = this.worldSeamAxis
-			.clone()
-			.applyQuaternion(this.ballRef.current!.quaternion)
-			.normalize();
-
-		if (v.lengthSq() > 1) {
-			const airflowDir = v.clone().negate().normalize();
-			const seamOnFlowPlane = seamDir
-				.clone()
-				.sub(airflowDir.multiplyScalar(seamDir.dot(airflowDir)));
-			const seamPlaneMag = seamOnFlowPlane.length();
-
-			if (seamPlaneMag > 1e-5) {
-				const swingDir = seamOnFlowPlane.multiplyScalar(
-					1 / seamPlaneMag,
-				);
-
-				aSwing = swingDir.multiplyScalar(-2);
-			}
-		}
-
-		return aSwing;
-	}
-
 	getAirDensity() {
 		// 1.15 to 1.25 kg/m3
-		return 1.225;
+		return 1.21;
 	}
 
 	getCoeffLift(w: number, r: number, speed: number) {
@@ -370,7 +426,7 @@ export default class GameConditions {
 			v,
 		);
 
-		console.log(coeffLift);
+		// console.log(coeffLift);
 
 		const magnusFactor =
 			(coeffLift * this.getAirDensity() * this.crossSecArea) /
@@ -387,15 +443,6 @@ export default class GameConditions {
 		const step = smoothstep(Re, 1e5, 3e5); // 0.0 to 1.0
 		const coeffDrag = 0.55 - step * 0.22; // to put in this range
 		return coeffDrag;
-	}
-
-	getReynoldsNumber(
-		airDensity: number,
-		speed: number,
-		diameter: number,
-		viscosity: number,
-	) {
-		return (airDensity * speed * diameter) / viscosity;
 	}
 
 	handleDrag() {

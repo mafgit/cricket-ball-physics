@@ -3,7 +3,7 @@ import GameConditions from "@/core/GameConditions";
 import { ballReleasePos } from "@/core/positions";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
-import { type Group } from "three";
+import { Vector3, type Group } from "three";
 
 export default function Ball() {
 	const seamThickness = 0.001;
@@ -11,11 +11,14 @@ export default function Ball() {
 	const ballRef = useRef<Group>(null);
 	const seamRef = useRef<Group>(null);
 	const game = useRef(new GameConditions(ballRef, seamRef));
+	const arrowHelperRef = useRef(null);
 
-	const restartAnimListener = (e: KeyboardEvent) => {
-		if (e.key.toLowerCase() === "r") {
+	const animKeyListener = (e: KeyboardEvent) => {
+		if (e.key.toLowerCase() === "p") {
+			game.current.isStopped = !game.current.isStopped;
+		} else if (e.key.toLowerCase() === "r") {
 			game.current.startAnim({
-				...spinParams,
+				...fastParams,
 				ballReleasePos,
 			});
 		}
@@ -27,19 +30,19 @@ export default function Ball() {
 		game.current.htmlVelZ = document.querySelector("#velocity #z")!;
 		game.current.htmlPace = document.querySelector("#velocity #p")!;
 
-		document.addEventListener("keyup", restartAnimListener);
-		return () => document.removeEventListener("keyup", restartAnimListener);
+		document.addEventListener("keyup", animKeyListener);
+		return () => document.removeEventListener("keyup", animKeyListener);
 	}, []);
 
 	useFrame((state, deltaSec) => {
 		if (!ballRef.current || !seamRef.current) return;
 
-		state.camera.position.set(
-			ballRef.current.position.x,
-			ballRef.current.position.y,
-			ballRef.current.position.z + 1.7,
-		);
-		state.camera.lookAt(ballRef.current.position);
+		// state.camera.position.set(
+		// 	ballRef.current.position.x,
+		// 	ballRef.current.position.y + 1.2,
+		// 	ballRef.current.position.z + 1.7,
+		// );
+		// state.camera.lookAt(ballRef.current.position);
 
 		if (game.current.isStopped) return;
 
@@ -70,14 +73,14 @@ export default function Ball() {
 		const aMagnus = game.current.handleMagnus();
 
 		// swing
-		const aSwing = game.current.handleSwing();
+		const aSwing = game.current.handleSwing(arrowHelperRef);
 
 		// ------ summing accelerations ------
-		const a = game.current.aGrav
-			.clone()
+		const a = new Vector3(0, 0, 0)
 			.add(aNormal)
+			.add(game.current.aGrav)
 			.add(aDrag)
-			.add(aMagnus)
+			// .add(aMagnus)
 			.add(aSwing);
 
 		// -------- updating velocities --------
@@ -97,85 +100,92 @@ export default function Ball() {
 		game.current.updateHtmlOverlay(v.x, v.y, v.z, vMagUpdated);
 
 		// stop anim
-		if (vMagUpdated < 0.08 || Math.sqrt(p.x ** 2 + p.z ** 2) >= 200) {
+		if (vMagUpdated < 0.08 || Math.sqrt(p.x ** 2 + p.z ** 2) >= 70) {
 			game.current.clearAnim();
 			// console.log(ballRef.current.position.z);
 		}
 	});
 
 	return (
-		<group
-			position={[0, game.current.ballRadius, -5]}
-			ref={ballRef}
-			castShadow
-			receiveShadow
-			// scale={[10, 10, 10]}
-		>
-			{/* <axesHelper args={[10]} /> */}
-			<group castShadow receiveShadow>
-				<mesh rotation={[0, 0, -Math.PI / 2]}>
-					<sphereGeometry
-						args={[
-							game.current.ballRadius,
-							32,
-							16,
-							0,
-							Math.PI * 2,
-							0,
-							Math.PI / 2,
-						]}
-					/>
-					<meshStandardMaterial
-						color="#C41E3A"
-						metalness={0}
-						roughness={0.15}
-					/>
-				</mesh>
+		<>
+			<arrowHelper
+				ref={arrowHelperRef}
+				args={[new Vector3(), new Vector3(0, 2, 0), 2, 'red']}
+			/>
 
-				<mesh rotation={[0, 0, +Math.PI / 2]}>
-					<sphereGeometry
-						args={[
-							game.current.ballRadius,
-							32,
-							16,
-							0,
-							Math.PI * 2,
-							0,
-							Math.PI / 2,
-						]}
-					/>
-					<meshStandardMaterial
-						color="black"
-						metalness={0}
-						roughness={0.7}
-					/>
-				</mesh>
+			<group
+				position={[0, game.current.ballRadius, -5]}
+				ref={ballRef}
+				castShadow
+				receiveShadow
+				// scale={[10, 10, 10]}
+			>
+				<group castShadow receiveShadow>
+					<mesh rotation={[0, 0, -Math.PI / 2]}>
+						<sphereGeometry
+							args={[
+								game.current.ballRadius,
+								32,
+								16,
+								0,
+								Math.PI * 2,
+								0,
+								Math.PI / 2,
+							]}
+						/>
+						<meshStandardMaterial
+							color="#C41E3A"
+							metalness={0}
+							roughness={0.15}
+						/>
+					</mesh>
+
+					<mesh rotation={[0, 0, +Math.PI / 2]}>
+						<sphereGeometry
+							args={[
+								game.current.ballRadius,
+								32,
+								16,
+								0,
+								Math.PI * 2,
+								0,
+								Math.PI / 2,
+							]}
+						/>
+						<meshStandardMaterial
+							color="black"
+							metalness={0}
+							roughness={0.7}
+						/>
+					</mesh>
+				</group>
+
+				<group ref={seamRef}>
+					{/* <axesHelper args={[5]} /> */}
+					{seamOffsets.map((offset, i) => {
+						const seamRadius =
+							Math.sqrt(
+								game.current.ballRadius ** 2 - offset ** 2,
+							) + 0;
+
+						return (
+							<mesh
+								key={i}
+								position={[offset, 0, 0]}
+								rotation={[0, Math.PI / 2, 0]}
+							>
+								<torusGeometry
+									args={[seamRadius, seamThickness, 30, 50]}
+								/>
+								<meshStandardMaterial
+									color="#ffffff"
+									roughness={0.9}
+								/>
+							</mesh>
+						);
+					})}
+				</group>
 			</group>
-
-			<group ref={seamRef}>
-				{/* <axesHelper args={[5]} /> */}
-				{seamOffsets.map((offset, i) => {
-					const seamRadius =
-						Math.sqrt(game.current.ballRadius ** 2 - offset ** 2) +
-						0;
-
-					return (
-						<mesh
-							key={i}
-							position={[offset, 0, 0]}
-							rotation={[0, Math.PI / 2, 0]}
-						>
-							<torusGeometry
-								args={[seamRadius, seamThickness, 30, 50]}
-							/>
-							<meshStandardMaterial
-								color="#ffffff"
-								roughness={0.9}
-							/>
-						</mesh>
-					);
-				})}
-			</group>
-		</group>
+		</>
 	);
 }
