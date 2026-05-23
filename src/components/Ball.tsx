@@ -37,12 +37,12 @@ export default function Ball() {
 	useFrame((state, deltaSec) => {
 		if (!ballRef.current || !seamRef.current) return;
 
-		// state.camera.position.set(
-		// 	ballRef.current.position.x,
-		// 	ballRef.current.position.y + 1.2,
-		// 	ballRef.current.position.z + 1.7,
-		// );
-		// state.camera.lookAt(ballRef.current.position);
+		state.camera.position.set(
+			ballRef.current.position.x,
+			ballRef.current.position.y + 1.2,
+			ballRef.current.position.z + 1.7,
+		);
+		state.camera.lookAt(ballRef.current.position);
 
 		if (game.current.isStopped) return;
 

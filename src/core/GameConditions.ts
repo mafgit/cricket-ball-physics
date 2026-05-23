@@ -133,8 +133,8 @@ export default class GameConditions {
 		const vDir = this.velocity.clone().normalize();
 
 		//
-		const coeffSwing = this.getCoeffSwing(vDir);
-		// const coeffSwing = 0.5;
+		// const coeffSwing = this.getCoeffSwing(vDir);
+		const coeffSwing = 0.5;
 		const factor =
 			(coeffSwing *
 				this.getAirDensity() *

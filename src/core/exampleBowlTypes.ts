@@ -2,7 +2,7 @@ import { degToRad } from "three/src/math/MathUtils.js";
 
 export const fastParams = {
 	speedKph: 135,
-	verticalAngle: degToRad(-1),
+	verticalAngle: degToRad(-4),
 	horizAngle: degToRad(5),
 	backSpin: 30,
 	leftSpin: 20,

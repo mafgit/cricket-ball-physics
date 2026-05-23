@@ -10,7 +10,7 @@ import {
 	Stats,
 } from "@react-three/drei";
 import Ball from "./Ball";
-import Ground from "./Ground";
+import Stadium from "./Stadium";
 import { Suspense, useRef } from "react";
 import Loader from "./Loader";
 import Batsman from "./Batsman";
@@ -84,7 +84,7 @@ export default function MyCanvas() {
 				<Batsman pos={batsmanPos} bentHeight={bentHeight} />
 				<Bowler pos={bowlerPos} height={playerHeight} />
 				<Ball />
-				<Ground />
+				<Stadium />
 			</Suspense>
 		</Canvas>
 	);
