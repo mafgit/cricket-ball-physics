@@ -14,3 +14,10 @@ To try to simulate real swing, spin, bounce, pace, ball + weather + pitch etc co
 
 - React Three Fiber
 - Next.js, TypeScript
+
+<!-- 
+todos:
+- add swing complexities?
+- optimize calculations (remove clones where not needed, remove recalculations or function calls where values are real constants dont change much)
+- tune constants in swing, seam, magnus, ground properties, etc
+-->

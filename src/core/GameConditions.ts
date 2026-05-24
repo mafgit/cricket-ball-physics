@@ -14,7 +14,6 @@ import {
 } from "./groundProperties";
 import { type RefObject } from "react";
 import { clamp, radToDeg, smoothstep } from "three/src/math/MathUtils.js";
-import { Cossette_Texte } from "next/font/google";
 
 /**
  * **angularVelocity**: to understand it, stick a rod along the ball and think of rotating it around that rod. The rod is the axis that we must set w[axis] high to.
@@ -262,6 +261,53 @@ export default class GameConditions {
 		}
 	}
 
+	handleSeamMovement(vyOld: number) {
+		if (Math.abs(vyOld) < 2.7) return;
+		const worldSeamAxis = new Vector3(1, 0, 0).applyQuaternion(
+			this.ballRef.current!.quaternion,
+		);
+		const seamProjectedOnGround = new Vector3(
+			worldSeamAxis.x,
+			0,
+			worldSeamAxis.z,
+		);
+
+		const uprightness = 1 - Math.abs(worldSeamAxis.y);
+		if (uprightness < 0.92) return; // leather part
+		if (uprightness > 0.98) return; // too upright
+		// otherwise leather part hitting
+		seamProjectedOnGround.normalize();
+
+		const vProjectedOnGround = this.velocity.clone().setY(0);
+		if (vProjectedOnGround.lengthSq() < 1e-4) return;
+		vProjectedOnGround.normalize();
+
+		// seam on ground alignment with velocity on ground
+		let seamYawAlignment = vProjectedOnGround.dot(seamProjectedOnGround);
+		const yaw = 1 - Math.abs(seamYawAlignment); // 0: seam straight in direction of velocity, 1: perpendicular
+		const grip = Math.pow(yaw, 1.8); // factor of misalignment
+		seamYawAlignment = clamp(seamYawAlignment, -1, 1); // for acos safeety
+		// const seamYawDeg = radToDeg(Math.acos(seamYawAlignment));
+		// const idealYawDeg = 90;
+		// const spread = 18;
+		// let yawEffectiveness = Math.exp(
+		// 	-((seamYawDeg - idealYawDeg) ** 2) / (2 * spread ** 2),
+		// );
+		// yawEffectiveness = clamp(yawEffectiveness, 0, 1);
+
+		const nipAxis = new Vector3(0, 1, 0).cross(vProjectedOnGround);
+		// crossed with ground normal
+		if (nipAxis.lengthSq() < 1e-8) return;
+		nipAxis.normalize();
+
+		const nipFactor =
+			this.seamProminence * grip * uprightness * (Math.abs(vyOld) / 3);
+
+		console.log("SEAM HIT: upr, yaw, factor", uprightness, grip, nipFactor);
+		this.velocity.x += nipAxis.x * nipFactor;
+		this.velocity.z += nipAxis.z * nipFactor;
+	}
+
 	handleGroundContact(deltaSec: number) {
 		const p = this.ballRef.current!.position;
 
@@ -319,6 +365,9 @@ export default class GameConditions {
 				w.x -= (r * zImpulse) / I;
 				w.z += (r * xImpulse) / I;
 			}
+
+			// ----------- seam movement -----------
+			this.handleSeamMovement(vyOld);
 
 			// check if it will even bounce or not
 			if (v.y > 0.1) {

@@ -1,13 +1,22 @@
 import { degToRad } from "three/src/math/MathUtils.js";
 
 export const fastParams = {
-	speedKph: 135,
-	verticalAngle: degToRad(-4),
-	horizAngle: degToRad(5),
-	backSpin: 30,
-	leftSpin: 20,
-	seamYawLeft: degToRad(-20),
-	seamRollLeft: degToRad(0),
+	//  outswing
+		speedKph: 135,
+		verticalAngle: degToRad(-6),
+		horizAngle: degToRad(2),
+		backSpin: 30,
+		leftSpin: -15,
+		seamYawLeft: degToRad(20),
+		seamRollLeft: degToRad(0),
+
+	// speedKph: 135,
+	// verticalAngle: degToRad(-4),
+	// horizAngle: degToRad(0),
+	// backSpin: 30,
+	// leftSpin: 0,
+	// seamYawLeft: degToRad(0),
+	// seamRollLeft: degToRad(0),
 };
 
 export const spinParams = {

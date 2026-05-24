@@ -37,12 +37,12 @@ export default function Ball() {
 	useFrame((state, deltaSec) => {
 		if (!ballRef.current || !seamRef.current) return;
 
-		state.camera.position.set(
-			ballRef.current.position.x,
-			ballRef.current.position.y + 1.2,
-			ballRef.current.position.z + 1.7,
-		);
-		state.camera.lookAt(ballRef.current.position);
+		// state.camera.position.set(
+		// 	ballRef.current.position.x,
+		// 	ballRef.current.position.y + 0.5,
+		// 	ballRef.current.position.z + 1,
+		// );
+		// state.camera.lookAt(ballRef.current.position);
 
 		if (game.current.isStopped) return;
 
@@ -81,7 +81,7 @@ export default function Ball() {
 			.add(game.current.aGrav)
 			.add(aDrag)
 			// .add(aMagnus)
-			.add(aSwing);
+			// .add(aSwing);
 
 		// -------- updating velocities --------
 		v.addScaledVector(a, deltaSec);
