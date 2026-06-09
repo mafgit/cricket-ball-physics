@@ -8,7 +8,7 @@ export default function Batsman({
 	return (
 		<mesh position={pos as any} castShadow receiveShadow>
 			<cylinderGeometry args={[0.2, 0.2, bentHeight]} />
-			<meshStandardMaterial color="white" transparent opacity={0.5} />
+			<meshStandardMaterial color="white" transparent opacity={0.3} />
 		</mesh>
 	);
 }
