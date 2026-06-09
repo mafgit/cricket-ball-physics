@@ -13,9 +13,17 @@ import {
 	softPitch,
 } from "./groundProperties";
 import { type RefObject } from "react";
-import { clamp, radToDeg, smoothstep } from "three/src/math/MathUtils.js";
+import {
+	clamp,
+	degToRad,
+	radToDeg,
+	smoothstep,
+} from "three/src/math/MathUtils.js";
+import { mpsToKph } from "./utils/math";
 
 /**
+ * Pass angles in **degrees**, and spin in **revolutions per second**, they will be converted to rads and rads/sec inside
+ *
  * **angularVelocity**: to understand it, stick a rod along the ball and think of rotating it around that rod. The rod is the axis that we must set w[axis] high to.
  *
  * **seamYaw & seamRoll**: the shiny side is always to the right initially, use these to set the desired seam/ball direction.
@@ -36,8 +44,8 @@ export default class GameConditions {
 	maxAirDensity = 1.25;
 
 	// ball
-	ballRadius = 0.0355;
-	ballMass = 0.156;
+	ballMass = 0.156; // todo: make it random between standard range, or add different kinds of balls like duke
+	ballRadius = 0.0355; // todo: same here
 	crossSecArea: number;
 	ballRef: RefObject<Group | null>;
 	ballPositionState: "FLIGHT" | "REST" | "SLIDE" | "ROLL" = "REST";
@@ -72,13 +80,8 @@ export default class GameConditions {
 	aGrav: Vector3;
 	aNormal: Vector3;
 
-	getReynoldsNumber(
-		airDensity: number,
-		speed: number,
-		diameter: number,
-		viscosity: number,
-	) {
-		return (airDensity * speed * diameter) / viscosity;
+	getReynoldsNumber(airDensity: number, speed: number) {
+		return (airDensity * speed * this.ballRadius * 2) / this.viscosity;
 	}
 
 	/**
@@ -144,7 +147,7 @@ export default class GameConditions {
 
 		//
 		const swingDir = this.getSwingDirection(vDir);
-		arrowHelperRef.current?.setDirection(swingDir);
+		// arrowHelperRef.current?.setDirection(swingDir);
 		aSwing = swingDir.clone().multiplyScalar(factor);
 		return aSwing;
 	}
@@ -195,8 +198,8 @@ export default class GameConditions {
 	}) {
 		this.ballPositionState = "REST";
 		this.speedKph = speedKph;
-		this.verticalAngle = verticalAngle;
-		this.horizAngle = horizAngle;
+		this.verticalAngle = degToRad(verticalAngle);
+		this.horizAngle = degToRad(horizAngle);
 		const speedMps = this.speedKph / 3.6;
 
 		const Vz =
@@ -209,7 +212,11 @@ export default class GameConditions {
 
 		this.velocity = new Vector3(Vx, Vy, Vz);
 
-		this.angularVelocity = new Vector3(backSpin, 0, leftSpin);
+		this.angularVelocity = new Vector3(
+			backSpin * 2 * Math.PI,
+			0,
+			leftSpin * 2 * Math.PI,
+		); // converted from revs/sec to rads/sec
 
 		if (this.ballRef.current) {
 			this.ballRef.current.position.set(
@@ -220,11 +227,11 @@ export default class GameConditions {
 
 			const quaternionYaw = new Quaternion().setFromAxisAngle(
 				new Vector3(0, 1, 0),
-				seamYawLeft,
+				degToRad(seamYawLeft),
 			);
 			const quaternionRoll = new Quaternion().setFromAxisAngle(
 				new Vector3(0, 0, 1),
-				seamRollLeft,
+				degToRad(seamRollLeft),
 			);
 
 			this.ballRef.current.quaternion.copy(
@@ -239,7 +246,7 @@ export default class GameConditions {
 		this.isStopped = false;
 		this.ballReleasePos = ballReleasePos;
 
-		this.updateHtmlOverlay(0, 0, 0, 0);
+		// this.updateHtmlOverlay(0, 0, 0, 0);
 	}
 
 	clearAnim() {
@@ -249,17 +256,22 @@ export default class GameConditions {
 		this.velocity = new Vector3(0, 0, 0);
 		this.angularVelocity = new Vector3(0, 0, 0);
 
-		this.updateHtmlOverlay(0, 0, 0, 0);
+		// this.updateHtmlOverlay(0, 0, 0, 0);
 	}
 
-	updateHtmlOverlay(vx: number, vy: number, vz: number, pace: number) {
-		if (this.htmlVelX && this.htmlVelY && this.htmlVelZ && this.htmlPace) {
-			this.htmlVelX.innerText = vx.toFixed(2);
-			this.htmlVelY.innerText = vy.toFixed(2);
-			this.htmlVelZ.innerText = vz.toFixed(2);
-			this.htmlPace.innerText = pace.toFixed(2);
-		}
-	}
+	// updateHtmlOverlay(vx: number, vy: number, vz: number, pace: number) {
+	// 	if (this.htmlVelX && this.htmlVelY && this.htmlVelZ && this.htmlPace) {
+	// 		vx = mpsToKph(vx);
+	// 		vy = mpsToKph(vy);
+	// 		vz = mpsToKph(vz);
+	// 		pace = mpsToKph(pace);
+
+	// 		this.htmlVelX.innerText = vx.toFixed(2);
+	// 		this.htmlVelY.innerText = vy.toFixed(2);
+	// 		this.htmlVelZ.innerText = vz.toFixed(2);
+	// 		this.htmlPace.innerText = pace.toFixed(2);
+	// 	}
+	// }
 
 	handleSeamMovement(vyOld: number) {
 		if (Math.abs(vyOld) < 2.7) return;
@@ -501,12 +513,7 @@ export default class GameConditions {
 		const vMag = this.velocity.length();
 
 		const p = this.getAirDensity();
-		const Re = this.getReynoldsNumber(
-			p,
-			vMag,
-			this.ballRadius * 2,
-			this.viscosity,
-		);
+		const Re = this.getReynoldsNumber(p, vMag);
 
 		const dragFactor =
 			(this.getCoeffDrag(Re) * p * this.crossSecArea) /

@@ -4,7 +4,7 @@ export default function Home() {
 	return (
 		<>
 			<p className="hint">Replay (R) &nbsp; Pause (P)</p>
-			<div id="velocity">
+			{/* <div id="velocity">
 				<p className="font-bold">POV: Bowler</p>
 				<div>
 					<p>👉 +x</p>
@@ -22,10 +22,10 @@ export default function Home() {
 
 				<div>
 					<p>Pace</p>
-					<p className="w-full"><span id="p">0</span> <span className="ml-auto">MPS</span></p>
+					<p className="w-full"><span id="p">0</span> <span className="ml-auto">KPH</span></p>
 				</div>
 			</div>
-			
+			 */}
 			<MyCanvas />
 		</>
 	);

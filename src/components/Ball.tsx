@@ -2,8 +2,11 @@ import { fastParams, spinParams } from "@/core/exampleBowlTypes";
 import GameConditions from "@/core/GameConditions";
 import { ballReleasePos } from "@/core/positions";
 import { useFrame } from "@react-three/fiber";
+import { folder, useControls } from "leva";
 import { useEffect, useRef } from "react";
 import { Vector3, type Group } from "three";
+import { degToRad } from "three/src/math/MathUtils.js";
+import getLevaControls from "./LevaControls";
 
 export default function Ball() {
 	const seamThickness = 0.001;
@@ -12,14 +15,25 @@ export default function Ball() {
 	const seamRef = useRef<Group>(null);
 	const game = useRef(new GameConditions(ballRef, seamRef));
 	const arrowHelperRef = useRef(null);
+	const levaControls = getLevaControls();
 
 	const animKeyListener = (e: KeyboardEvent) => {
 		if (e.key.toLowerCase() === "p") {
 			game.current.isStopped = !game.current.isStopped;
 		} else if (e.key.toLowerCase() === "r") {
 			game.current.startAnim({
-				...fastParams,
-				ballReleasePos,
+				speedKph: levaControls.speedKph,
+				backSpin: levaControls.backSpin,
+				leftSpin: levaControls.leftSpin,
+				seamRollLeft: levaControls.seamRollLeft,
+				seamYawLeft: levaControls.seamYawLeft,
+				verticalAngle: levaControls.verticalAngle,
+				horizAngle: levaControls.horizAngle,
+				ballReleasePos: [
+					levaControls.x,
+					levaControls.y,
+					levaControls.z,
+				],
 			});
 		}
 	};
@@ -37,12 +51,12 @@ export default function Ball() {
 	useFrame((state, deltaSec) => {
 		if (!ballRef.current || !seamRef.current) return;
 
-		// state.camera.position.set(
-		// 	ballRef.current.position.x,
-		// 	ballRef.current.position.y + 0.5,
-		// 	ballRef.current.position.z + 1,
-		// );
-		// state.camera.lookAt(ballRef.current.position);
+		state.camera.position.set(
+			ballRef.current.position.x,
+			ballRef.current.position.y + 0.5,
+			ballRef.current.position.z + 1,
+		);
+		state.camera.lookAt(ballRef.current.position);
 
 		if (game.current.isStopped) return;
 
@@ -81,7 +95,7 @@ export default function Ball() {
 			.add(game.current.aGrav)
 			.add(aDrag)
 			// .add(aMagnus)
-			// .add(aSwing);
+			.add(aSwing);
 
 		// -------- updating velocities --------
 		v.addScaledVector(a, deltaSec);
@@ -97,10 +111,10 @@ export default function Ball() {
 
 		// ----- overlay -----
 		const vMagUpdated = v.length();
-		game.current.updateHtmlOverlay(v.x, v.y, v.z, vMagUpdated);
+		// game.current.updateHtmlOverlay(v.x, v.y, v.z, vMagUpdated);
 
 		// stop anim
-		if (vMagUpdated < 0.08 || Math.sqrt(p.x ** 2 + p.z ** 2) >= 70) {
+		if (vMagUpdated < 0.08 || Math.sqrt(p.x ** 2 + p.z ** 2) >= 20) {
 			game.current.clearAnim();
 			// console.log(ballRef.current.position.z);
 		}
@@ -110,7 +124,7 @@ export default function Ball() {
 		<>
 			<arrowHelper
 				ref={arrowHelperRef}
-				args={[new Vector3(), new Vector3(0, 2, 0), 2, 'red']}
+				args={[new Vector3(), new Vector3(0, 2, 0), 2, "red"]}
 			/>
 
 			<group

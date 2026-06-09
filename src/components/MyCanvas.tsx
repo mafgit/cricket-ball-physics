@@ -51,7 +51,7 @@ export default function MyCanvas() {
 			{/* Controls */}
 			{/* <OrbitControls makeDefault /> */}
 			{/* <FirstPersonControls movementSpeed={5} /> */}
-			<PointerLockControls pointerSpeed={1.5} />
+			{/* <PointerLockControls pointerSpeed={1.5} /> */}
 			{/* <Player /> */}
 
 			{/* environment */}
