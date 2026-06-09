@@ -25,10 +25,12 @@ import {
 	playerHeight,
 	sunPos,
 } from "@/core/positions";
+import getLevaControls from "./LevaControls";
 // import { useControls } from "leva";
 
 export default function MyCanvas() {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
+	const controls = getLevaControls();
 
 	return (
 		<Canvas
@@ -83,8 +85,11 @@ export default function MyCanvas() {
 			<Suspense fallback={<Loader />}>
 				<Batsman pos={batsmanPos} bentHeight={bentHeight} />
 				<Bowler pos={bowlerPos} height={playerHeight} />
-				<Ball />
-				<Stadium />
+				<Ball controls={controls} />
+				<Stadium
+					texturedPitch={controls.texturedPitch}
+					texturedGrass={controls.texturedGrass}
+				/>
 			</Suspense>
 		</Canvas>
 	);

@@ -1,9 +1,13 @@
+"use client";
 import MyCanvas from "@/components/MyCanvas";
+import { Leva } from "leva";
 
 export default function Home() {
 	return (
 		<>
 			<p className="hint">Replay (R) &nbsp; Pause (P)</p>
+			<Leva oneLineLabels={true} collapsed={false} hideCopyButton />
+
 			{/* <div id="velocity">
 				<p className="font-bold">POV: Bowler</p>
 				<div>

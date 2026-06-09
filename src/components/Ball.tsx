@@ -1,14 +1,10 @@
-import { fastParams, spinParams } from "@/core/exampleBowlTypes";
 import GameConditions from "@/core/GameConditions";
-import { ballReleasePos } from "@/core/positions";
 import { useFrame } from "@react-three/fiber";
-import { folder, useControls } from "leva";
 import { useEffect, useRef } from "react";
 import { Vector3, type Group } from "three";
-import { degToRad } from "three/src/math/MathUtils.js";
 import getLevaControls from "./LevaControls";
 
-export default function Ball() {
+export default function Ball({ controls }: { controls: any }) {
 	const seamThickness = 0.001;
 	const seamOffsets = [-0.01, -0.007, -0.003, 0.003, 0.007, 0.01];
 	const ballRef = useRef<Group>(null);
@@ -122,10 +118,10 @@ export default function Ball() {
 
 	return (
 		<>
-			<arrowHelper
+			{/* <arrowHelper
 				ref={arrowHelperRef}
 				args={[new Vector3(), new Vector3(0, 2, 0), 2, "red"]}
-			/>
+			/> */}
 
 			<group
 				position={[0, game.current.ballRadius, -5]}

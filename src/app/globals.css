@@ -36,12 +36,12 @@ canvas:focus {
 	background: rgba(15, 15, 15, 0.753);
 	padding: 4px 8px;
 	color: #fff !important;
-	right: 30px;
+	left: 30px;
 	font-size: 0.8rem;
 	border-radius: 4px;
 }
 
-#velocity {
+/* #velocity {
 	position: absolute;
 	z-index: 30 !important;
 	top: 70px;
@@ -79,10 +79,10 @@ canvas:focus {
 		color: black;
 		font-weight: bold;
 	}
-}
+} */
 
 .fps {
-	top: 10px !important;
+	top: 50px !important;
 	left: 30px !important;
 	position: absolute !important;
 }
