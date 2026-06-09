@@ -35,11 +35,6 @@ export default function Ball({ controls }: { controls: any }) {
 	};
 
 	useEffect(() => {
-		game.current.htmlVelX = document.querySelector("#velocity #x")!;
-		game.current.htmlVelY = document.querySelector("#velocity #y")!;
-		game.current.htmlVelZ = document.querySelector("#velocity #z")!;
-		game.current.htmlPace = document.querySelector("#velocity #p")!;
-
 		document.addEventListener("keyup", animKeyListener);
 		return () => document.removeEventListener("keyup", animKeyListener);
 	}, []);
@@ -107,7 +102,6 @@ export default function Ball({ controls }: { controls: any }) {
 
 		// ----- overlay -----
 		const vMagUpdated = v.length();
-		// game.current.updateHtmlOverlay(v.x, v.y, v.z, vMagUpdated);
 
 		// stop anim
 		if (vMagUpdated < 0.08 || Math.sqrt(p.x ** 2 + p.z ** 2) >= 20) {

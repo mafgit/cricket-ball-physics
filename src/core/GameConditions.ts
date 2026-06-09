@@ -245,8 +245,6 @@ export default class GameConditions {
 		this.timeElapsed = 0;
 		this.isStopped = false;
 		this.ballReleasePos = ballReleasePos;
-
-		// this.updateHtmlOverlay(0, 0, 0, 0);
 	}
 
 	clearAnim() {
@@ -255,23 +253,7 @@ export default class GameConditions {
 
 		this.velocity = new Vector3(0, 0, 0);
 		this.angularVelocity = new Vector3(0, 0, 0);
-
-		// this.updateHtmlOverlay(0, 0, 0, 0);
 	}
-
-	// updateHtmlOverlay(vx: number, vy: number, vz: number, pace: number) {
-	// 	if (this.htmlVelX && this.htmlVelY && this.htmlVelZ && this.htmlPace) {
-	// 		vx = mpsToKph(vx);
-	// 		vy = mpsToKph(vy);
-	// 		vz = mpsToKph(vz);
-	// 		pace = mpsToKph(pace);
-
-	// 		this.htmlVelX.innerText = vx.toFixed(2);
-	// 		this.htmlVelY.innerText = vy.toFixed(2);
-	// 		this.htmlVelZ.innerText = vz.toFixed(2);
-	// 		this.htmlPace.innerText = pace.toFixed(2);
-	// 	}
-	// }
 
 	handleSeamMovement(vyOld: number) {
 		if (Math.abs(vyOld) < 2.7) return;
