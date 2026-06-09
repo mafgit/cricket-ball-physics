@@ -6,11 +6,13 @@
 - **the imitation** is that there aren't direct plug-and-play formulas for many of these factors as I had initially thought.
 - **Progress**: I am not _actively_ maintaining it, so the todos are tentative.
 
-### 📸 Overview Up Till Now
+### 📸 Overview
 
-(Facing 142 kph)
+<img width="1366" height="768" alt="Screenshot 2026-06-10 004423" src="https://github.com/user-attachments/assets/2c4e98f6-996f-4a66-bff7-a7d2f0e5a3be" />
 
 <video src="https://github.com/user-attachments/assets/952399ea-aabd-4a5b-9832-c47e54c186af" style="border-radius: 8px;" controls></video>
+(Facing 142 kph)
+
 
 ### 🧰 Tech Stack Used
 
