@@ -29,16 +29,24 @@ canvas:focus {
 	outline: none;
 }
 
-.hint {
+.overlay-btns {
 	position: absolute;
 	z-index: 30 !important;
 	top: 10px;
-	background: rgba(15, 15, 15, 0.753);
-	padding: 4px 8px;
-	color: #fff !important;
 	left: 30px;
 	font-size: 0.8rem;
-	border-radius: 4px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+
+	button {
+		border-radius: 4px;
+		background: rgba(15, 15, 15, 0.753);
+		color: #fff !important;
+		padding: 2px 8px;
+        cursor: pointer;
+	}
 }
 
 /* #velocity {

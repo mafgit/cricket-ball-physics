@@ -2,8 +2,8 @@ import { fastParams } from "@/core/exampleBowlTypes";
 import { ballReleasePos } from "@/core/positions";
 import { folder, useControls } from "leva";
 
-export default function getLevaControls() {
-	return useControls({
+export default function useLevaControls() {
+	useControls({
 		"Ball Preset": {
 			options: ["Custom"],
 		},
@@ -95,14 +95,6 @@ export default function getLevaControls() {
 			{
 				render: (get) => get("Ball Preset") === "Custom",
 			},
-		),
-
-		"Texture/Environment": folder(
-			{
-				texturedPitch: false,
-				texturedGrass: true,
-			},
-			{ collapsed: true },
 		),
 	});
 }

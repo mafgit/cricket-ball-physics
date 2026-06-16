@@ -1,46 +1,78 @@
+import { fastParams } from "@/core/exampleBowlTypes";
 import GameConditions from "@/core/GameConditions";
+import { ballReleasePos } from "@/core/positions";
 import { useFrame } from "@react-three/fiber";
-import { useEffect, useRef } from "react";
+import { folder, levaStore, useControls } from "leva";
+import { useCallback, useEffect, useRef } from "react";
 import { Vector3, type Group } from "three";
-import getLevaControls from "./LevaControls";
 
-export default function Ball({ controls }: { controls: any }) {
+export default function Ball() {
 	const seamThickness = 0.001;
 	const seamOffsets = [-0.01, -0.007, -0.003, 0.003, 0.007, 0.01];
 	const ballRef = useRef<Group>(null);
 	const seamRef = useRef<Group>(null);
-	const game = useRef(new GameConditions(ballRef, seamRef));
+	const game = useRef<GameConditions | null>(null);
 	const arrowHelperRef = useRef(null);
-	const levaControls = getLevaControls();
+
+	const toggleGameStopped = useCallback(() => {
+		if (!game.current) return;
+		game.current.isStopped = !game.current.isStopped;
+	}, []);
+
+	const restartAnim = useCallback(() => {
+		if (!game.current) return;
+		game.current.startAnim({
+			speedKph: levaStore.get("Ball.Release Speed/Angle.speedKph"),
+			backSpin: levaStore.get("Ball.Spin (Revolutions/sec).backSpin"),
+			leftSpin: levaStore.get("Ball.Spin (Revolutions/sec).leftSpin"),
+			seamRollLeft: levaStore.get("Ball.Seam Orientation.seamRollLeft"),
+			seamYawLeft: levaStore.get("Ball.Seam Orientation.seamYawLeft"),
+			verticalAngle: levaStore.get(
+				"Ball.Release Speed/Angle.verticalAngle",
+			),
+			horizAngle: levaStore.get("Ball.Release Speed/Angle.horizAngle"),
+			ballReleasePos: [
+				levaStore.get("Ball.Release Position.x"),
+				levaStore.get("Ball.Release Position.y"),
+				levaStore.get("Ball.Release Position.z"),
+			],
+		});
+	}, []);
 
 	const animKeyListener = (e: KeyboardEvent) => {
 		if (e.key.toLowerCase() === "p") {
-			game.current.isStopped = !game.current.isStopped;
+			toggleGameStopped();
 		} else if (e.key.toLowerCase() === "r") {
-			game.current.startAnim({
-				speedKph: levaControls.speedKph,
-				backSpin: levaControls.backSpin,
-				leftSpin: levaControls.leftSpin,
-				seamRollLeft: levaControls.seamRollLeft,
-				seamYawLeft: levaControls.seamYawLeft,
-				verticalAngle: levaControls.verticalAngle,
-				horizAngle: levaControls.horizAngle,
-				ballReleasePos: [
-					levaControls.x,
-					levaControls.y,
-					levaControls.z,
-				],
-			});
+			restartAnim();
 		}
 	};
 
 	useEffect(() => {
+		game.current = new GameConditions(ballRef, seamRef); // one time initialization
+		document
+			.getElementById("pause-btn")
+			?.addEventListener("click", toggleGameStopped);
+		document
+			.getElementById("replay-btn")
+			?.addEventListener("click", restartAnim);
 		document.addEventListener("keyup", animKeyListener);
-		return () => document.removeEventListener("keyup", animKeyListener);
+
+		return () => {
+			document
+				.getElementById("pause-btn")
+				?.removeEventListener("click", toggleGameStopped);
+			document
+				.getElementById("replay-btn")
+				?.removeEventListener("click", restartAnim);
+			document.removeEventListener("keyup", animKeyListener);
+			game.current = null; // todo: cancelAnimationFrame inside game.current.destroy() new function
+		};
 	}, []);
 
-	useFrame((state, deltaSec) => {
-		if (!ballRef.current || !seamRef.current) return;
+	useFrame((state, delta) => {
+		const deltaSec = Math.min(delta, 0.1); // delta clamp because of tab change
+
+		if (!ballRef.current || !seamRef.current || !game.current) return;
 
 		state.camera.position.set(
 			ballRef.current.position.x,
@@ -85,7 +117,7 @@ export default function Ball({ controls }: { controls: any }) {
 			.add(aNormal)
 			.add(game.current.aGrav)
 			.add(aDrag)
-			// .add(aMagnus)
+			.add(aMagnus)
 			.add(aSwing);
 
 		// -------- updating velocities --------
@@ -118,7 +150,7 @@ export default function Ball({ controls }: { controls: any }) {
 			/> */}
 
 			<group
-				position={[0, game.current.ballRadius, -5]}
+				position={[0, game.current?.ballRadius ?? 0.0355, -5]}
 				ref={ballRef}
 				castShadow
 				receiveShadow
@@ -128,7 +160,7 @@ export default function Ball({ controls }: { controls: any }) {
 					<mesh rotation={[0, 0, -Math.PI / 2]}>
 						<sphereGeometry
 							args={[
-								game.current.ballRadius,
+								game.current?.ballRadius ?? 0.0355,
 								32,
 								16,
 								0,
@@ -147,7 +179,7 @@ export default function Ball({ controls }: { controls: any }) {
 					<mesh rotation={[0, 0, +Math.PI / 2]}>
 						<sphereGeometry
 							args={[
-								game.current.ballRadius,
+								game.current?.ballRadius ?? 0.0355,
 								32,
 								16,
 								0,
@@ -157,7 +189,7 @@ export default function Ball({ controls }: { controls: any }) {
 							]}
 						/>
 						<meshStandardMaterial
-							color="black"
+							color="#C41E3A"
 							metalness={0}
 							roughness={0.7}
 						/>
@@ -169,7 +201,8 @@ export default function Ball({ controls }: { controls: any }) {
 					{seamOffsets.map((offset, i) => {
 						const seamRadius =
 							Math.sqrt(
-								game.current.ballRadius ** 2 - offset ** 2,
+								(game.current?.ballRadius || 0.0355) ** 2 -
+									offset ** 2,
 							) + 0;
 
 						return (
