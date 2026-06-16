@@ -7,7 +7,7 @@ export const fastParams = {
 	horizAngle: 4,
 	backSpin: 30,
 	leftSpin: -15,
-	seamYawLeft: 20,
+	seamYawLeft: 8,
 	seamRollLeft: 0,
 
 	// speedKph: 135,

@@ -1,11 +1,17 @@
 "use client";
-import MyCanvas from "@/components/MyCanvas";
 import { Leva } from "leva";
+import dynamic from "next/dynamic";
+
+const MyCanvas = dynamic(() => import("@/components/3d/MyCanvas"), { ssr: false });
 
 export default function Home() {
 	return (
 		<>
-			<p className="hint">Replay (R) &nbsp; Pause (P)</p>
+			<div className="overlay-btns">
+				<button id="replay-btn">Replay (R)</button>
+				<button id="pause-btn">Pause (P)</button>
+			</div>
+
 			<Leva oneLineLabels={true} collapsed={false} hideCopyButton />
 
 			{/* <div id="velocity">

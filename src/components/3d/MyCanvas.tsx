@@ -12,7 +12,7 @@ import {
 import Ball from "./Ball";
 import Stadium from "./Stadium";
 import { Suspense, useRef } from "react";
-import Loader from "./Loader";
+import Loader from "../ui/Loader";
 import Batsman from "./Batsman";
 import Bowler from "./Bowler";
 import {
@@ -25,12 +25,11 @@ import {
 	playerHeight,
 	sunPos,
 } from "@/core/positions";
-import getLevaControls from "./LevaControls";
+import LevaController from "./LevaController";
 // import { useControls } from "leva";
 
 export default function MyCanvas() {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
-	const controls = getLevaControls();
 
 	return (
 		<Canvas
@@ -45,6 +44,8 @@ export default function MyCanvas() {
 			}}
 			shadows
 		>
+			<LevaController />
+
 			{/* helpers */}
 			{/* <axesHelper args={[30]} />
 			<gridHelper args={[20, 20]} /> */}
@@ -85,11 +86,8 @@ export default function MyCanvas() {
 			<Suspense fallback={<Loader />}>
 				<Batsman pos={batsmanPos} bentHeight={bentHeight} />
 				<Bowler pos={bowlerPos} height={playerHeight} />
-				<Ball controls={controls} />
-				<Stadium
-					texturedPitch={controls.texturedPitch}
-					texturedGrass={controls.texturedGrass}
-				/>
+				<Ball />
+				<Stadium />
 			</Suspense>
 		</Canvas>
 	);

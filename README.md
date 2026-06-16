@@ -23,5 +23,6 @@
 - optimize calculations (remove clones where not needed, remove recalculations or function calls where values are real constants dont change much)
 - tune constants in swing, seam, magnus, ground properties, etc
 - add gaussian randomness
+- add wind
 - add presets in leva options
 - add better environment/weather

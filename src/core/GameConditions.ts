@@ -67,12 +67,6 @@ export default class GameConditions {
 	timeElapsed = 0;
 	runupDuration = 2;
 
-	// overlay
-	htmlVelX: HTMLElement | undefined;
-	htmlVelY: HTMLElement | undefined;
-	htmlVelZ: HTMLElement | undefined;
-	htmlPace: HTMLElement | undefined;
-
 	// ground
 	pitch = hardPitch;
 	outfield = outfield;
@@ -297,7 +291,7 @@ export default class GameConditions {
 		const nipFactor =
 			this.seamProminence * grip * uprightness * (Math.abs(vyOld) / 3);
 
-		console.log("SEAM HIT: upr, yaw, factor", uprightness, grip, nipFactor);
+		// console.log("SEAM HIT: upr, yaw, factor", uprightness, grip, nipFactor);
 		this.velocity.x += nipAxis.x * nipFactor;
 		this.velocity.z += nipAxis.z * nipFactor;
 	}
