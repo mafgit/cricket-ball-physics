@@ -49,7 +49,7 @@ export default function MyCanvas() {
 			{/* helpers */}
 			{/* <axesHelper args={[30]} />
 			<gridHelper args={[20, 20]} /> */}
-			<Stats className="fps" />
+			{/* <Stats className="fps" /> */}
 
 			{/* Controls */}
 			{/* <OrbitControls makeDefault /> */}

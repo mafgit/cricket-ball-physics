@@ -13,6 +13,8 @@ export default function Ball() {
 	const seamRef = useRef<Group>(null);
 	const game = useRef<GameConditions | null>(null);
 	const arrowHelperRef = useRef(null);
+	const accumulator = useRef(0);
+	const subStepDelta = 1 / 120;
 
 	const toggleGameStopped = useCallback(() => {
 		if (!game.current) return;
@@ -21,6 +23,7 @@ export default function Ball() {
 
 	const restartAnim = useCallback(() => {
 		if (!game.current) return;
+		accumulator.current = 0;
 		game.current.startAnim({
 			speedKph: levaStore.get("Ball.Release Speed/Angle.speedKph"),
 			backSpin: levaStore.get("Ball.Spin (Revolutions/sec).backSpin"),
@@ -69,76 +72,84 @@ export default function Ball() {
 		};
 	}, []);
 
-	useFrame((state, delta) => {
-		const deltaSec = Math.min(delta, 0.1); // delta clamp because of tab change
+	useFrame((state, deltaSec) => {
+		const deltaClamped = Math.min(deltaSec, 0.1); // delta clamp because of tab change
 
 		if (!ballRef.current || !seamRef.current || !game.current) return;
 
-		state.camera.position.set(
-			ballRef.current.position.x,
-			ballRef.current.position.y + 0.5,
-			ballRef.current.position.z + 1,
-		);
-		state.camera.lookAt(ballRef.current.position);
+		const p = ballRef.current.position;
+
+		state.camera.position.lerp(new Vector3(p.x, p.y + 0.25, p.z + 1), 0.2);
+		state.camera.lookAt(p);
 
 		if (game.current.isStopped) return;
 
 		// 2 sec delay when anim starts
 		if (game.current.timeElapsed < game.current.runupDuration) {
-			game.current.timeElapsed += deltaSec;
+			game.current.timeElapsed += deltaClamped;
 			return;
 		}
 
 		if (game.current.ballPositionState === "REST")
 			game.current.ballPositionState = "FLIGHT"; // runup to flight transition
 
-		// game.current.applyAngularDecay(deltaSec);
-
-		// shorthand
-		const p = ballRef.current.position;
 		const v = game.current.velocity;
 
-		// -------- accelerations --------
-		// on each frame... so no accumulation of accelerations
+		accumulator.current += deltaClamped;
 
-		const aNormal = game.current.getNormalAcc();
+		while (accumulator.current >= subStepDelta) {
+			// game.current.applyAngularDecay(deltaSec);
 
-		// drag effect (air resistance)
-		const aDrag = game.current.handleDrag();
+			// -------- accelerations --------
+			// on each frame... so no accumulation of accelerations
 
-		// magnus effect (swing in air DUE TO SPIN/ROTATION, perpendicular to angular velocity and velocity, like free kick swing)
-		const aMagnus = game.current.handleMagnus();
+			const aNormal = game.current.getNormalAcc();
 
-		// swing
-		const aSwing = game.current.handleSwing(arrowHelperRef);
+			// drag effect (air resistance)
+			const aDrag = game.current.handleDrag();
 
-		// ------ summing accelerations ------
-		const a = new Vector3(0, 0, 0)
-			.add(aNormal)
-			.add(game.current.aGrav)
-			.add(aDrag)
-			.add(aMagnus)
-			.add(aSwing);
+			// magnus effect (swing in air DUE TO SPIN/ROTATION, perpendicular to angular velocity and velocity, like free kick swing)
+			const aMagnus = game.current.handleMagnus();
 
-		// -------- updating velocities --------
-		v.addScaledVector(a, deltaSec);
+			// swing
+			const aSwing = game.current.handleSwing(arrowHelperRef);
 
-		// -------- updating positions --------
-		p.addScaledVector(v, deltaSec);
+			// ------ summing accelerations ------
+			const a = new Vector3(0, 0, 0)
+				.add(aNormal)
+				.add(game.current.aGrav)
+				.add(aDrag)
+				.add(aMagnus)
+				.add(aSwing);
 
-		// -------- updating rotations --------
-		game.current.updateRotation(deltaSec);
+			// -------- updating velocities --------
+			v.addScaledVector(a, subStepDelta);
 
-		// -------- contact with ground --------
-		game.current.handleGroundContact(deltaSec);
+			// -------- updating positions --------
+			p.addScaledVector(v, subStepDelta);
 
-		// ----- overlay -----
-		const vMagUpdated = v.length();
+			state.camera.position.lerp(
+				new Vector3(p.x, p.y + 0.25, p.z + 1), 0.2,
+			);
 
-		// stop anim
-		if (vMagUpdated < 0.08 || Math.sqrt(p.x ** 2 + p.z ** 2) >= 20) {
-			game.current.clearAnim();
-			// console.log(ballRef.current.position.z);
+			state.camera.lookAt(p);
+
+			// -------- updating rotations --------
+			game.current.updateRotation(subStepDelta);
+
+			// -------- contact with ground --------
+			game.current.handleGroundContact(subStepDelta);
+
+			accumulator.current -= subStepDelta;
+			const vMagUpdated = v.length();
+
+			// stop anim
+			if (vMagUpdated < 0.08 || Math.sqrt(p.x ** 2 + p.z ** 2) >= 20) {
+				game.current.clearAnim();
+				accumulator.current = 0;
+				// console.log(ballRef.current.position.z);
+				break;
+			}
 		}
 	});
 
